@@ -1,0 +1,39 @@
+package ui
+
+import (
+	"antiscoof/internal/view"
+)
+
+templ Navigation() {
+	<div class="navbar border-b border-gray-700">
+	  <div class="flex-1">
+	    <a href="/" class="text-primary text-4xl font-bold">AntiScoof</a>
+	  </div>
+		<ul class="menu menu-horizontal px-1 text-2xl flex gap-x-10">
+			if view.GetAuthenticatedUser(ctx).LoggedIn {
+	      <li>
+	        <details>
+	          <summary>
+	            {view.GetAuthenticatedUser(ctx).Email}
+	          </summary>
+	          <ul class="p-2 bg-base-100 rounded-t-none">
+	            <li><a href="/settings">Settings</a></li>
+	            <li>@LogoutForm()</li>
+	          </ul>
+	        </details>
+	      </li>
+			} else {
+				<div class="flex space-x-2">
+					<a href="/register" class="btn btn-secondary">Register</a>
+					<a href="/login" class="btn btn-primary">Log In</a>
+				</div>
+			}
+    </ul>
+	</div>
+}
+
+templ LogoutForm() {
+	<form method="POST" action="/logout">
+		<button type="submit">Logout <i class="fa-solid fa-sign-out ml-2"></i></button>
+	</form>
+}
