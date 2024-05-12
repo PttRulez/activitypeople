@@ -1,14 +1,14 @@
 package view
 
 import (
-	"antiscoof/internal/types"
+	"antiscoof/internal/model"
 	"context"
 )
 
-func GetAuthenticatedUser(ctx context.Context) types.AuthenticatedUser {
-	user, ok := ctx.Value(types.UserContextKey).(types.AuthenticatedUser)
+func GetAuthenticatedUser(ctx context.Context) model.AuthenticatedUser {
+	user, ok := ctx.Value(model.UserContextKey).(model.AuthenticatedUser)
 	if !ok {
-		return types.AuthenticatedUser{}
+		return model.AuthenticatedUser{}
 	}
 	return user
 }

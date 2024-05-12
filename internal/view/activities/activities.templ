@@ -1,15 +1,16 @@
 package activities
 
 import "antiscoof/internal/view/layout"
-import "antiscoof/internal/view"
+import "antiscoof/internal/service/strava-client"
+import "fmt"
 
-templ Index() {
+templ Index(activities []stravaclient.StravaActivityInfo) {
 	@layout.App(true) {
 		<div class="text-center py-12">
 			<h1 class="text-2xl">Activities</h1>
-			if view.GetAuthenticatedUser(ctx).LoggedIn {
-
+			for _, activity := range activities {
+				<div>{activity.Name} - {activity.SportType} - {fmt.Sprintf("%f", activity.Distance)}</div>
 			}
-		</div>
+			</div>
 	}
 }

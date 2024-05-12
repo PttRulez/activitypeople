@@ -1,15 +1,16 @@
 package handler
 
 import (
+	"antiscoof/internal/model"
 	"antiscoof/internal/store"
-	"antiscoof/internal/types"
+	"antiscoof/internal/utils"
 	"context"
 	"fmt"
 	"net/http"
 	"strings"
 )
 
-func AddUserToContext(sessionStore store.SessionStore, userStore store.UserStore) func(http.Handler) http.Handler {
+func AddUserToContext(sessionStore store.SessionStore, userStore store.UserStore) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			if strings.Contains(r.URL.Path, "/public") {
@@ -19,19 +20,27 @@ func AddUserToContext(sessionStore store.SessionStore, userStore store.UserStore
 
 			userSession, err := sessionStore.GetUserFromSession(r)
 			if err != nil {
-				fmt.Println("Не получили пользователя из сессии:\n", err)
+				fmt.Printf("Не получили пользователя из сессии:\n %v", err)
 				next.ServeHTTP(w, r)
 				return
 			}
-			
-			user, err := userStore.GetById(r.Context(), userSession.Id)
 
-			authUser := types.AuthenticatedUser{
+			user, err := userStore.GetByIdWithStrava(r.Context(), userSession.Id)
+			if err != nil || user == nil {
+				fmt.Println("Не получили пользователя из базы данных:\n", err)
+
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			authUser := model.AuthenticatedUser{
 				Id:       user.Id,
 				Email:    user.Email,
 				LoggedIn: true,
+				Name:     user.Name,
+				Strava:   user.Strava,
 			}
-			ctx := context.WithValue(r.Context(), types.UserContextKey, authUser)
+			ctx := context.WithValue(r.Context(), model.UserContextKey, authUser)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 		return http.HandlerFunc(fn)
@@ -45,10 +54,11 @@ func OnlyAuthenticated(next http.Handler) http.Handler {
 			return
 		}
 
-		user := getUserFromContext(r)
+		user := utils.GetUserFromContext(r)
 		if !user.LoggedIn {
 			path := r.URL.Path
-			htmxRedirect(w, r, "/login?from="+path)
+			utils.HtmxRedirect(w, r, "/login?from="+path)
+			return
 		}
 		next.ServeHTTP(w, r)
 	}

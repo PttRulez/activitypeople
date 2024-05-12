@@ -3,7 +3,9 @@ package handler
 import (
 	"antiscoof/internal/model"
 	"antiscoof/internal/store"
+	"antiscoof/internal/utils"
 	"antiscoof/internal/view/auth"
+	"fmt"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -23,11 +25,12 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 		return render(r, w, auth.LoginForm(credentials, errs))
 	}
 	user, err := c.userRepo.GetByEmail(r.Context(), credentials.Email)
-	if err != nil {
+	if err != nil || user == nil {
 		return render(r, w, auth.LoginForm(credentials, map[string]string{
 			"Credentials": "invalid credentials",
 		}))
 	}
+	fmt.Printf("(c *AuthController) Login user: %v\n", user)
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword),
 		[]byte(credentials.Password))
 	if err != nil {
@@ -44,7 +47,7 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 			"Credentials": "invalid credentials",
 		}))
 	}
-	return htmxRedirect(w, r, "/")
+	return utils.HtmxRedirect(w, r, "/")
 }
 
 func (c *AuthController) RegisterPage(w http.ResponseWriter, r *http.Request) error {
@@ -83,13 +86,14 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) error 
 	}
 
 	id, err := c.userRepo.Insert(r.Context(), &user)
+	fmt.Printf("err: %v\n", err)
 	if err != nil {
 		return render(r, w, auth.RegisterForm(dto, map[string]string{"Credentials": "Что-то пошло не так"}))
 	}
 
 	c.sessionStore.SetUserIntoSession(w, r, store.UserSession{Id: id, Email: user.Email})
 
-	return htmxRedirect(w, r, "/")
+	return utils.HtmxRedirect(w, r, "/")
 }
 
 type AuthController struct {

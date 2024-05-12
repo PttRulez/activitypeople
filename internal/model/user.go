@@ -7,6 +7,8 @@ const (
 	Scoof Role = "SCOOF"
 )
 
+const UserContextKey = "user"
+
 type User struct {
 	Email          string `db:"email"`
 	HashedPassword string `db:"hashed_password"`
@@ -14,6 +16,15 @@ type User struct {
 	Name           string `db:"name"`
 	Password       string ``
 	Role           Role   `db:"role"`
+	Strava         *StravaInfo
+}
+
+type AuthenticatedUser struct {
+	Id       int
+	Email    string
+	Name     string
+	LoggedIn bool
+	Strava   *StravaInfo
 }
 
 type RegisterUserDto struct {

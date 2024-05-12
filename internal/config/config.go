@@ -16,9 +16,9 @@ type Config struct {
 }
 
 type StravaConfig struct {
-	ClientID         string
-	ClientSecret     string
-	OAuthRedirectUrl string
+	ClientID     string
+	ClientSecret string
+	OAuthLink    string
 }
 
 func MustLoadConfig() *Config {
@@ -75,10 +75,30 @@ func MustLoadConfig() *Config {
 		Username: pgUsername,
 	}
 
+	stravaClientID := os.Getenv("STRAVA_CLIENT_ID")
+	if stravaClientID == "" {
+		panic("STRAVA_CLIENT_ID is not set")
+	}
+	stravaClientSecret := os.Getenv("STRAVA_CLIENT_SECRET")
+	if pgUsername == "" {
+		panic("STRAVA_CLIENT_SECRET is not set")
+	}
+	stravaOAuthLink := os.Getenv("STRAVA_OAUTH_LINK")
+	if pgUsername == "" {
+		panic("STRAVA_OAUTH_LINK is not set")
+	}
+
+	var strava StravaConfig = StravaConfig{
+		ClientID:     stravaClientID,
+		ClientSecret: stravaClientSecret,
+		OAuthLink:    stravaOAuthLink,
+	}
+
 	return &Config{
 		HttpListenPort: httpListenPort,
 		Postgres:       pg,
 		SessionSecret:  sessionSecret,
+		Strava:         strava,
 		UserSessionKey: userSessionKey,
 	}
 }
