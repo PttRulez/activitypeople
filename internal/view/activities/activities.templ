@@ -1,16 +1,54 @@
 package activities
 
 import "antiscoof/internal/view/layout"
-import "antiscoof/internal/service/strava-client"
+import stravamodels "antiscoof/internal/service/strava-client/stravamodels"
 import "fmt"
 
-templ Index(activities []stravaclient.StravaActivityInfo) {
+templ Index(activities []stravamodels.ActivityInfo) {
 	@layout.App(true) {
-		<div class="text-center py-12">
+		<div class="py-12">
 			<h1 class="text-2xl">Activities</h1>
-			for _, activity := range activities {
-				<div>{activity.Name} - {activity.SportType} - {fmt.Sprintf("%f", activity.Distance)}</div>
-			}
+			<div class="grid grid-rows-4 grid-flow-col gap-4">
+				for _, activity := range activities {
+					@ActivityCard(activity)
+				}
 			</div>
+		</div>
+	}
+}
+
+templ ActivityCard(activity stravamodels.ActivityInfo) {
+	<a class="card w-96 bg-base-100 shadow-xl border border-gray-700 cursor-pointer">
+	  <div class="card-body">
+	    <h2 class="card-title">
+				{activity.Name}
+				<div class="badge badge-outline badge-primary">@SportTypeIcon(activity.SportType)</div>
+			</h2>
+	    @ShortActivityInfo(activity)
+	  </div>
+	</a>
+}
+
+templ ShortActivityInfo(activity stravamodels.ActivityInfo) {
+	switch activity.SportType {
+		case stravamodels.SportTypeWeightTraining:
+			<br />
+		default:
+			<p>{fmt.Sprintf("%.2f", activity.Distance / 1000)} km</p>
+	}
+}
+
+templ SportTypeIcon(sportType stravamodels.SportType) {
+	switch sportType {
+		case stravamodels.SportTypeRun:
+			<i class="fa-solid fa-person-running"></i>
+		case stravamodels.SportTypeMountainBikeRide:
+		case stravamodels.SportTypeGravelRide:
+		case stravamodels.SportTypeRide:
+			<i class="fa-solid fa-bicycle"></i>
+		case stravamodels.SportTypeNordicSki:
+			<i class="fa-solid fa-person-skiing-nordic"></i>
+		default:
+			<i class="fa-solid fa-dog"></i>
 	}
 }

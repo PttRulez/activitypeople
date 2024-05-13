@@ -2,31 +2,52 @@ package stravaclient
 
 import (
 	"antiscoof/internal/model"
+	models "antiscoof/internal/service/strava-client/stravamodels"
 	"antiscoof/internal/store"
 	"antiscoof/internal/utils"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+
+	strava "github.com/obalunenko/strava-api/client"
 )
 
-func (api *StravaApi) GetAthleteActivities() ([]StravaActivityInfo, error) {
-	req, _ := http.NewRequest(http.MethodGet, api.baseURl+"/athlete/activities", nil)
+func PrintJSON(v any) {
+	indent, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		fmt.Println("PrintJSON err:\n", err)
+	}
+	fmt.Println(string(indent))
+}
+
+func (api *StravaApi) ObaGetAthleteActivities() {
+	activities, err := api.obalunenko.Activities.GetLoggedInAthleteActivities(context.TODO())
+	if err != nil {
+		fmt.Println("ObaGetAthleteActivities err:\n", err)
+	}
+	fmt.Println("ObaGetAthleteActivities printJSON:")
+	PrintJSON(activities)
+}
+
+func (api *StravaApi) GetAthleteActivities() ([]models.ActivityInfo, error) {
+	req, _ := http.NewRequest(http.MethodGet, api.baseURl+"athlete/activities", nil)
 	req.Header.Add("Authorization", "Bearer "+api.userAccessToken)
 	resp, err := api.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAthleteActivities httpClient.Do(req): \n%s", err)
 	}
-	var activityData []StravaActivityInfo
+	var activityData []models.ActivityInfo
 	err = json.NewDecoder(resp.Body).Decode(&activityData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAthleteActivities json.NewDecoder: \n%s", err)
 	}
 	return activityData, nil
 }
 
-func (api *StravaApi) OAuth(userCode string) (*StravaOAuthResponse, error) {
+func (api *StravaApi) OAuth(userCode string) (*models.OAuthResponse, error) {
 	// This funcion is used after user was redirected to Strava and authorized our app, we got userCode from callback
 	url := fmt.Sprintf(`https://www.strava.com/oauth/token?
 		client_id=%s
@@ -45,7 +66,7 @@ func (api *StravaApi) OAuth(userCode string) (*StravaOAuthResponse, error) {
 	defer r.Body.Close()
 
 	// Почему-то не декодится в StravaOAuthResponse
-	responseData := &StravaOAuthResponse{}
+	responseData := &models.OAuthResponse{}
 	m := make(map[string]any)
 	err = json.NewDecoder(r.Body).Decode(&m)
 	// err = json.NewDecoder(r.Body).Decode(responseData)
@@ -74,7 +95,7 @@ func (m *StravaApi) RoundTrip(req *http.Request) (*http.Response, error) {
 
 		resp, err = m.transport.RoundTrip(refreshTokenRequest)
 
-		refreshData := &StravaOAuthRefreshTokenResponse{}
+		refreshData := &models.OAuthRefreshTokenResponse{}
 		json.NewDecoder(resp.Body).Decode(refreshData)
 		if err != nil {
 			return nil, fmt.Errorf("StravaApi RoundTrip: \n%s", err)
@@ -101,6 +122,7 @@ type StravaApi struct {
 	appClientSecret  string
 	baseURl          string
 	httpClient       *http.Client
+	obalunenko       *strava.APIClient
 	storeTokens      func(accessToken, refreshToken string) error
 	transport        http.RoundTripper
 	userAccessToken  string
@@ -116,10 +138,16 @@ type CreateStravaApiParams struct {
 }
 
 func NewStravaApi(params CreateStravaApiParams) *StravaApi {
+	client, err := strava.NewAPIClient(params.UserAccessToken)
+	if err != nil {
+		fmt.Println("Failed to start obalunenko strava:", err)
+	}
+
 	stravaApi := &StravaApi{
 		appClientId:      params.AppClientId,
 		appClientSecret:  params.AppClientSecret,
 		baseURl:          "https://www.strava.com/api/v3/",
+		obalunenko:       client,
 		storeTokens:      params.StoreTokens,
 		transport:        http.DefaultTransport,
 		userAccessToken:  params.UserAccessToken,
