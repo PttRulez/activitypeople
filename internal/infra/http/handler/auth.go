@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	model "github.com/pttrulez/activitypeople/internal/domain"
+	"github.com/pttrulez/activitypeople/internal/infra/http/contracts"
 	"github.com/pttrulez/activitypeople/internal/infra/store"
 	"github.com/pttrulez/activitypeople/internal/infra/view/auth"
 
@@ -16,7 +17,7 @@ func (c *AuthController) LoginPage(w http.ResponseWriter, r *http.Request) error
 }
 
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
-	credentials := model.LoginUserDto{
+	credentials := contracts.LoginUserRequest{
 		Email:    r.FormValue("email"),
 		Password: r.FormValue("password"),
 	}
@@ -55,7 +56,7 @@ func (c *AuthController) RegisterPage(w http.ResponseWriter, r *http.Request) er
 }
 
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) error {
-	dto := model.RegisterUserDto{
+	dto := contracts.RegisterUserRequest{
 		ConfirmPassword: r.FormValue("confirmPassword"),
 		Email:           r.FormValue("email"),
 		Name:            r.FormValue("name"),

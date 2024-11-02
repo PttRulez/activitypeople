@@ -1,14 +1,14 @@
 package handler
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/pttrulez/activitypeople/internal/config"
 	"github.com/pttrulez/activitypeople/internal/domain"
 	"github.com/pttrulez/activitypeople/internal/infra/store"
 	"github.com/pttrulez/activitypeople/internal/infra/strava"
 	"github.com/pttrulez/activitypeople/internal/infra/view/activities"
-
-	"fmt"
-	"net/http"
 )
 
 func (c *ActivitiesController) GetActivitiesPage(w http.ResponseWriter, r *http.Request) error {
