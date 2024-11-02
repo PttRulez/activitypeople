@@ -10,6 +10,8 @@ import (
 	"github.com/pttrulez/activitypeople/internal/infra/store"
 	"github.com/pttrulez/activitypeople/internal/infra/store/pgstore"
 	"github.com/pttrulez/activitypeople/internal/infra/store/session"
+	"github.com/pttrulez/activitypeople/internal/infra/strava"
+	activityservice "github.com/pttrulez/activitypeople/internal/service/activities"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -18,12 +20,21 @@ func StartServer() {
 	cfg := config.MustLoadConfig()
 
 	router := chi.NewMux()
+
+	// stores
 	var sessionStore store.SessionStore = session.NewGorillaCookiesSessionsStore(
 		[]byte(cfg.SessionSecret), cfg.UserSessionKey)
 	pgConn := pgstore.CreatePGConnection(cfg.Postgres)
 	stravaStore := pgstore.NewStravaPostgres(pgConn)
 	userStore := pgstore.NewUserPostgres(pgConn)
 
+	// clients
+	stravaClient := strava.NewStravaClient(cfg.Strava.ClientID, cfg.Strava.ClientSecret)
+
+	// services
+	activitiesService := activityservice.NewService(stravaClient, stravaStore)
+
+	// routing
 	router.Use(handler.AddUserToContext(sessionStore, userStore))
 
 	router.Handle("/public/*", http.StripPrefix("/public",
@@ -31,8 +42,8 @@ func StartServer() {
 
 	authController := handler.NewAuthController(userStore, sessionStore)
 	homeCocntroller := handler.NewHomeController(cfg.Strava.OAuthLink)
-	activitiesController := handler.NewActivitiesController(cfg, stravaStore)
-	// stravaCocntroller := handler.NewStravaController(stravaApi, stravaStore)
+	activitiesController := handler.NewActivitiesController(activitiesService)
+	stravaController := handler.NewStravaController(activitiesService)
 
 	// Handlers
 	router.Get("/", handler.Make(homeCocntroller.HandlerHomeIndex))
@@ -44,7 +55,7 @@ func StartServer() {
 	router.Group(func(authorized chi.Router) {
 		authorized.Use(handler.OnlyAuthenticated)
 		authorized.Get("/activities", handler.Make(activitiesController.GetActivitiesPage))
-		// authorized.Get("/strava-oauth-callback", handler.Make(stravaController.StravaOAuthCallback))
+		authorized.Get("/strava-oauth-callback", handler.Make(stravaController.StravaOAuthCallback))
 	})
 
 	fmt.Printf("Listening on port %s\n", cfg.HttpListenPort)

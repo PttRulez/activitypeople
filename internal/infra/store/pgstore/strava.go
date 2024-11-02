@@ -8,11 +8,12 @@ import (
 	"github.com/pttrulez/activitypeople/internal/domain"
 )
 
-func (pg *StravaPostgres) Insert(ctx context.Context, s *domain.StravaInfo) error {
+func (pg *StravaPostgres) Insert(ctx context.Context, accessToken string,
+	refreshToken string, userId int) error {
 	queryString := `INSERT INTO strava_info (user_id, access_token, refresh_token) 
 		VALUES ($1, $2, $3);`
 
-	_, err := pg.db.ExecContext(ctx, queryString, s.UserId, s.AccessToken, s.RefreshToken)
+	_, err := pg.db.ExecContext(ctx, queryString, userId, accessToken, refreshToken)
 	if err != nil {
 		return fmt.Errorf("[StravaPostgres.Insert]: %w", err)
 	}

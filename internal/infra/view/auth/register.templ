@@ -1,6 +1,9 @@
 package auth
 
-import "github.com/pttrulez/activitypeople/internal/view/layout"
+import (
+	"github.com/pttrulez/activitypeople/internal/infra/view/layout"
+	"github.com/pttrulez/activitypeople/internal/infra/http/contracts"
+)
 
 templ RegisterPage() {
 	@layout.App(false) {
@@ -11,7 +14,7 @@ templ RegisterPage() {
 					Register
 				</h1>
 
-				@RegisterForm(model.RegisterUserDto{}, nil)
+				@RegisterForm(contracts.RegisterUserRequest{}, nil)
 
 			</div>
 		</div>
@@ -22,7 +25,7 @@ templ RegisterSuccess(email string) {
 	<div>A confirmation email has been sent to: <span class="font-semibold text-success">{ email }</span></div>
 }
 
-templ RegisterForm(dto model.RegisterUserDto, errors map[string]string) {
+templ RegisterForm(req contracts.RegisterUserRequest, errors map[string]string) {
 	<form
 		hx-post="/register"
 		hx-swap="outerHTML"
@@ -32,7 +35,7 @@ templ RegisterForm(dto model.RegisterUserDto, errors map[string]string) {
 		  <div class="label">
 		    <span class="label-text">Почта</span>
 		  </div>
-		  <input type="email" name="email" value={dto.Email} placeholder="type your email" 
+		  <input type="email" name="email" value={req.Email} placeholder="type your email" 
 				class="input input-bordered w-full"  autocomplete="off" required/>
 			if message, ok := errors["Email"]; ok {
 			  <div class="label">
@@ -45,7 +48,7 @@ templ RegisterForm(dto model.RegisterUserDto, errors map[string]string) {
 		  <div class="label">
 		    <span class="label-text">Имя</span>
 		  </div>
-		  <input type="text" name="name"  value={dto.Name}  placeholder="ваше имя/ник на сайте" 
+		  <input type="text" name="name"  value={req.Name}  placeholder="ваше имя/ник на сайте" 
 				class="input input-bordered w-full" autocomplete="off" />
 			if message, ok := errors["Name"]; ok {
 			  <div class="label">

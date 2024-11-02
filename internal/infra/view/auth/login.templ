@@ -1,6 +1,9 @@
 package auth
 
-import "github.com/pttrulez/activitypeople/internal/infra/view/layout"
+import (
+	"github.com/pttrulez/activitypeople/internal/infra/view/layout"
+	"github.com/pttrulez/activitypeople/internal/infra/http/contracts"
+)
 
 templ LoginPage() {
 	@layout.App(false) {
@@ -11,14 +14,14 @@ templ LoginPage() {
 					Login
 				</h1>
 
-				@LoginForm(domain.LoginUserDto{}, nil)
+				@LoginForm(contracts.LoginUserRequest{}, nil)
 
 			</div>
 		</div>
 	}
 }
 
-templ LoginForm(dto domain.LoginUserDto, errors map[string]string) {
+templ LoginForm(req contracts.LoginUserRequest, errors map[string]string) {
 	<form
 		hx-post="/login"
 		hx-swap="outerHTML"
@@ -28,7 +31,7 @@ templ LoginForm(dto domain.LoginUserDto, errors map[string]string) {
 		  <div class="label">
 		    <span class="label-text">Email</span>
 		  </div>
-		  <input type="email" name="email" value={dto.Email} placeholder="type your email" 
+		  <input type="email" name="email" value={req.Email} placeholder="type your email" 
 				class="input input-bordered w-full"  autocomplete="off" required/>
 			if message, ok := errors["Email"]; ok {
 			  <div class="label">
@@ -41,7 +44,7 @@ templ LoginForm(dto domain.LoginUserDto, errors map[string]string) {
 		  <div class="label">
 		    <span class="label-text">Password</span>
 		  </div>
-		  <input type="password" name="password" value={dto.Password} placeholder="type your password" 
+		  <input type="password" name="password" value={req.Password} placeholder="type your password" 
 				class="input input-bordered w-full" autocomplete="off" required/>
 			if message, ok := errors["Password"]; ok {
 			  <div class="label">

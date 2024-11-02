@@ -1,12 +1,9 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
-
-	"github.com/pttrulez/activitypeople/internal/domain"
-	"github.com/pttrulez/activitypeople/internal/infra/store/pgstore"
-	"github.com/pttrulez/activitypeople/internal/infra/strava"
 )
 
 func (c *StravaController) StravaOAuthCallback(w http.ResponseWriter, r *http.Request) error {
@@ -14,17 +11,9 @@ func (c *StravaController) StravaOAuthCallback(w http.ResponseWriter, r *http.Re
 	if code == "" {
 		return HtmxRedirect(w, r, "/")
 	}
-	data, err := c.stravaApi.OAuth(code)
-	if err != nil {
-		fmt.Printf("StravaOAuthCallback error: %s\n", err)
-		return HtmxRedirect(w, r, "/")
-	}
+
 	user := GetUserFromRequest(r)
-	err = c.stravaRepo.Insert(r.Context(), &domain.StravaInfo{
-		AccessToken:  &data.AccessToken,
-		RefreshToken: &data.RefreshToken,
-		UserId:       user.Id,
-	})
+	err := c.stravaService.OAuthStrava(r.Context(), code, user.Id)
 	if err != nil {
 		fmt.Printf("StravaOAuthCallback error: %s\n", err)
 		return HtmxRedirect(w, r, "/")
@@ -34,16 +23,17 @@ func (c *StravaController) StravaOAuthCallback(w http.ResponseWriter, r *http.Re
 }
 
 type StravaController struct {
-	stravaApi  *strava.StravaApi
-	stravaRepo *pgstore.StravaPostgres
+	stravaService StravaService
+}
+
+type StravaService interface {
+	OAuthStrava(ctx context.Context, userCode string, userID int) error
 }
 
 func NewStravaController(
-	stravaApi *strava.StravaApi,
-	stravaRepo *pgstore.StravaPostgres,
+	stravaService StravaService,
 ) *StravaController {
 	return &StravaController{
-		stravaApi:  stravaApi,
-		stravaRepo: stravaRepo,
+		stravaService: stravaService,
 	}
 }

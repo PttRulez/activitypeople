@@ -17,7 +17,7 @@ type ActivityInfo struct {
 	Name        string    `json:"name"`
 	PhotoCount  int       `json:"photo_count"`
 	StartDate   time.Time `json:"start_date"`
-	SportType   string    `json:"type"`
+	SportType   SportType `json:"type"`
 	WorkoutType int       `json:"workout_type"`
 }
 
