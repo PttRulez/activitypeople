@@ -1,5 +1,7 @@
-run: build
-	@./bin/dreampicai
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
 
 install:
 	@go install github.com/a-h/templ/cmd/templ@latest
@@ -17,21 +19,22 @@ templ:
 	@templ generate --watch --proxy=http://localhost:3000
 
 build:
-	npx tailwindcss -i internal/view/css/app.css -o public/styles.css
+	npx tailwindcss -i internal/infra/view/css/app.css -o public/styles.css
 	@templ generate view
-	@go build -tags dev -o bin/dreampicai main.go 
+	@go build -tags dev -o bin cmd/main.go
 
-up: ## Database migration up
-	@go run cmd/migrate/main.go up
 
-reset:
-	@go run cmd/reset/main.go up
+migrate_up:
+	goose -dir db/migrations postgres "postgresql://$(PG_USERNAME):$(PG_PASSWORD)@$(PG_HOST):$(PG_PORT)/$(PG_DB_NAME)?sslmode=disable" up
 
-down: ## Database migration down
-	@go run cmd/migrate/main.go down
+migrate_down:
+	goose -dir db/migrations postgres "postgresql://$(PG_USERNAME):$(PG_PASSWORD)@$(PG_HOST):$(PG_PORT)/$(PG_DB_NAME)?sslmode=disable" down
 
-migration: ## Migrations against the database
-	@migrate create -ext sql -dir cmd/migrate/migrations $(filter-out $@,$(MAKECMDGOALS))
+migrate_down_all:
+	goose -dir db/migrations postgres "postgresql://$(PG_USERNAME):$(PG_PASSWORD)@$(PG_HOST):$(PG_PORT)/$(PG_DB_NAME)?sslmode=disable" down-to 0
+
+migrate_reset:
+	goose -dir db/migrations postgres "postgresql://$(PG_USERNAME):$(PG_PASSWORD)@$(PG_HOST):$(PG_PORT)/$(PG_DB_NAME)?sslmode=disable" reset
 
 seed:
 	@go run cmd/seed/main.go

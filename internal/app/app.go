@@ -1,14 +1,15 @@
 package app
 
 import (
-	"antiscoof/internal/config"
-	"antiscoof/internal/handler"
-	"antiscoof/internal/store"
-	"antiscoof/internal/store/pgstore"
-	"antiscoof/internal/store/session"
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/pttrulez/activitypeople/internal/config"
+	"github.com/pttrulez/activitypeople/internal/infra/http/handler"
+	"github.com/pttrulez/activitypeople/internal/infra/store"
+	"github.com/pttrulez/activitypeople/internal/infra/store/pgstore"
+	"github.com/pttrulez/activitypeople/internal/infra/store/session"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -20,8 +21,6 @@ func StartServer() {
 	var sessionStore store.SessionStore = session.NewGorillaCookiesSessionsStore(
 		[]byte(cfg.SessionSecret), cfg.UserSessionKey)
 	pgConn := pgstore.CreatePGConnection(cfg.Postgres)
-	// stravaStore := pgstore.NewStravaPostgres(pgConn)
-	// stravaApi := stravaclient.NewStravaApi(cfg)
 	stravaStore := pgstore.NewStravaPostgres(pgConn)
 	userStore := pgstore.NewUserPostgres(pgConn)
 
@@ -45,7 +44,7 @@ func StartServer() {
 	router.Group(func(authorized chi.Router) {
 		authorized.Use(handler.OnlyAuthenticated)
 		authorized.Get("/activities", handler.Make(activitiesController.GetActivitiesPage))
-		// authorized.Get("/strava-oauth-callback", handler.Make(stravaCocntroller.StravaOAuthCallback))
+		// authorized.Get("/strava-oauth-callback", handler.Make(stravaController.StravaOAuthCallback))
 	})
 
 	fmt.Printf("Listening on port %s\n", cfg.HttpListenPort)

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"antiscoof/internal/store/pgstore"
 	"os"
+
+	"github.com/pttrulez/activitypeople/internal/infra/store/pgstore"
 
 	"github.com/joho/godotenv"
 )

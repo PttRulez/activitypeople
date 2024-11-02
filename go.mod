@@ -1,4 +1,4 @@
-module antiscoof
+module github.com/pttrulez/activitypeople
 
 go 1.22.0
 

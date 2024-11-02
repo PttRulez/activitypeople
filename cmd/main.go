@@ -1,7 +1,7 @@
 package main
 
 import (
-	"antiscoof/internal/app"
+	"github.com/pttrulez/activitypeople/internal/app"
 )
 
 func main() {

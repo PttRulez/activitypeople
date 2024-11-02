@@ -1,0 +1,21 @@
+package home
+
+import "github.com/pttrulez/activitypeople/internal/view"
+import "github.com/pttrulez/activitypeople/internal/view/layout"
+
+templ Index(stravaOAuthLink string) {
+	@layout.App(true) {
+	if view.GetAuthenticatedUser(ctx).Strava == nil {
+		<div class="text-center">
+			<h1 class="text-2xl mt-10 mb-10">Здарова, атлет. Чтобы посмотреть свои активности, необходимо законнектить сраву</h1>
+			<a href={templ.SafeURL(stravaOAuthLink)} class="btn btn-primary">Привяжите свой аккаунт Strava</a>
+		</div>
+		
+	} else {
+		<div class="text-center">
+			<h1 class="text-2xl mt-10 mb-10">Приветствуем вас, {view.GetAuthenticatedUser(ctx).Name}</h1>
+			<a href="activities" class="btn btn-primary">Ваши активити</a>
+		</div>
+	}
+	}
+}
