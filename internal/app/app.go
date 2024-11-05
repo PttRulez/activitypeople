@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/pttrulez/activitypeople/internal/config"
-	"github.com/pttrulez/activitypeople/internal/infra/http/handler"
-	"github.com/pttrulez/activitypeople/internal/infra/store"
+	"github.com/pttrulez/activitypeople/internal/infra/http_server/handler"
 	"github.com/pttrulez/activitypeople/internal/infra/store/pgstore"
 	"github.com/pttrulez/activitypeople/internal/infra/store/session"
 	"github.com/pttrulez/activitypeople/internal/infra/strava"
-	activityservice "github.com/pttrulez/activitypeople/internal/service/activities"
+	"github.com/pttrulez/activitypeople/internal/service/activities"
+	"github.com/pttrulez/activitypeople/internal/service/auth"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -19,33 +19,35 @@ import (
 func StartServer() {
 	cfg := config.MustLoadConfig()
 
-	router := chi.NewMux()
-
 	// stores
-	var sessionStore store.SessionStore = session.NewGorillaCookiesSessionsStore(
-		[]byte(cfg.SessionSecret), cfg.UserSessionKey)
+	sessionStore := session.NewGorillaCookiesSessionsStore(
+		[]byte(cfg.SessionSecret))
 	pgConn := pgstore.CreatePGConnection(cfg.Postgres)
 	stravaStore := pgstore.NewStravaPostgres(pgConn)
 	userStore := pgstore.NewUserPostgres(pgConn)
 
 	// clients
-	stravaClient := strava.NewStravaClient(cfg.Strava.ClientID, cfg.Strava.ClientSecret)
+	strava := strava.NewStrava(cfg.Strava.ClientID, cfg.Strava.ClientSecret)
 
 	// services
-	activitiesService := activityservice.NewService(stravaClient, stravaStore)
+	authService := auth.NewService(userStore)
+	activitiesService := activities.NewService(strava, stravaStore)
 
-	// routing
-	router.Use(handler.AddUserToContext(sessionStore, userStore))
+	// Routing
+	router := chi.NewMux()
+	router.Use(handler.AddUserToContextMiddleware(sessionStore))
 
+	// static files
 	router.Handle("/public/*", http.StripPrefix("/public",
 		http.FileServer(http.Dir("./public"))))
 
-	authController := handler.NewAuthController(userStore, sessionStore)
+	// controllers
+	authController := handler.NewAuthController(authService, sessionStore)
 	homeCocntroller := handler.NewHomeController(cfg.Strava.OAuthLink)
 	activitiesController := handler.NewActivitiesController(activitiesService)
 	stravaController := handler.NewStravaController(activitiesService)
 
-	// Handlers
+	// handlers
 	router.Get("/", handler.Make(homeCocntroller.HandlerHomeIndex))
 	router.Get("/register", handler.Make(authController.RegisterPage))
 	router.Post("/register", handler.Make(authController.Register))
@@ -53,7 +55,7 @@ func StartServer() {
 	router.Post("/login", handler.Make(authController.Login))
 
 	router.Group(func(authorized chi.Router) {
-		authorized.Use(handler.OnlyAuthenticated)
+		authorized.Use(handler.OnlyAuthenticatedMiddleware)
 		authorized.Get("/activities", handler.Make(activitiesController.GetActivitiesPage))
 		authorized.Get("/strava-oauth-callback", handler.Make(stravaController.StravaOAuthCallback))
 	})

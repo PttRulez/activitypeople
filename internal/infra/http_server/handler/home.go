@@ -7,12 +7,7 @@ import (
 )
 
 func (c *HomeController) HandlerHomeIndex(w http.ResponseWriter, r *http.Request) error {
-	user := GetUserFromRequest(r)
-
-	if !user.LoggedIn {
-		HtmxRedirect(w, r, "/login")
-	}
-	return render(r, w, home.Index(c.StravaOAuthLink))
+	return render(r, w, home.Index(c.StravaOAuthLink, GetUserFromRequest(r)))
 }
 
 type HomeController struct {

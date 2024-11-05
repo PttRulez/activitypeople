@@ -4,11 +4,11 @@ import "github.com/pttrulez/activitypeople/internal/infra/view/layout"
 import "github.com/pttrulez/activitypeople/internal/domain"
 import "fmt"
 
-templ Index(activities []domain.ActivityInfo) {
-	@layout.App(true) {
+templ Index(activities []domain.Activity, user domain.User) {
+	@layout.App(user) {
 		<div class="py-12">
 			<h1 class="text-2xl">Activities</h1>
-			<div class="grid grid-rows-4 grid-flow-col gap-4">
+			<div class="grid grid-cols-7 gap-4">
 				for _, activity := range activities {
 					@ActivityCard(activity)
 				}
@@ -17,36 +17,37 @@ templ Index(activities []domain.ActivityInfo) {
 	}
 }
 
-templ ActivityCard(activity domain.ActivityInfo) {
-	<a class="card w-96 bg-base-100 shadow-xl border border-gray-700 cursor-pointer">
+templ ActivityCard(activity domain.Activity) {
+	<a class="card bg-base-100 shadow-xl border border-gray-700 cursor-pointer">
 	  <div class="card-body">
-	    <h2 class="card-title">
+			<h2 class="card-title">
 				{activity.Name}
-				<div class="badge badge-outline badge-primary">@SportTypeIcon(activity.SportType)</div>
 			</h2>
-	    @ShortActivityInfo(activity)
+	    @ShortActivity(activity)
+			<div className="card-actions justify-end">
+				<div class="badge badge-outline badge-primary">@SportTypeIcon(activity.SportType)</div>
+			</div>
 	  </div>
 	</a>
 }
 
-templ ShortActivityInfo(activity domain.ActivityInfo) {
-	switch activity.SportType {
-		case domain.SportTypeWeightTraining:
-			<br />
-		default:
-			<p>{fmt.Sprintf("%.2f", activity.Distance / 1000)} km</p>
-	}
+templ ShortActivity(activity domain.Activity) {
+	
+	<p>
+		{fmt.Sprintf("%02d:%02d", activity.TotalTime/3600, (activity.TotalTime % 3600) / 60)}
+		if activity.Distance > 0 {
+			<span>{fmt.Sprintf("%.2f", activity.Distance / 1000)} km</span>
+		}
+	</p>
 }
 
 templ SportTypeIcon(sportType domain.SportType) {
 	switch sportType {
-		case domain.SportTypeRun:
+		case domain.STRun:
 			<i class="fa-solid fa-person-running"></i>
-		case domain.SportTypeMountainBikeRide:
-		case domain.SportTypeGravelRide:
-		case domain.SportTypeRide:
+		case domain.STRide:
 			<i class="fa-solid fa-bicycle"></i>
-		case domain.SportTypeNordicSki:
+		case domain.STXCSki:
 			<i class="fa-solid fa-person-skiing-nordic"></i>
 		default:
 			<i class="fa-solid fa-dog"></i>

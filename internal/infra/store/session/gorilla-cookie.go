@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pttrulez/activitypeople/internal/infra/store"
-
 	"github.com/gorilla/sessions"
+	"github.com/pttrulez/activitypeople/internal/domain"
 )
 
 func (s GorillaCookiesSessionsStore) SetUserIntoSession(w http.ResponseWriter, r *http.Request,
-	user store.UserSession) error {
-	userSession, err := s.store.Get(r, s.userSessionKey)
+	user domain.User) error {
+	userSession, err := s.store.Get(r, userKey)
 	if err != nil {
 		return fmt.Errorf("SetUserIntoSession: %w", err)
 	}
@@ -20,47 +19,60 @@ func (s GorillaCookiesSessionsStore) SetUserIntoSession(w http.ResponseWriter, r
 	userSession.Options.MaxAge = 3600
 
 	// заполняем куку
-	userSession.Values["id"] = user.Id
-	userSession.Values["email"] = user.Email
+	userSession.Values[idKey] = user.Id
+	userSession.Values[emailKey] = user.Email
+	userSession.Values[stravaAccessKey] = user.Strava.AccessToken
+	userSession.Values[stravaRefreshKey] = user.Strava.RefreshToken
 
 	return userSession.Save(r, w)
 }
 
-func (s GorillaCookiesSessionsStore) GetUserFromSession(r *http.Request) (*store.UserSession, error) {
-	userSession, err := s.store.Get(r, s.userSessionKey)
+func (s GorillaCookiesSessionsStore) GetUserFromSession(r *http.Request) (domain.User, error) {
+	userSession, err := s.store.Get(r, userKey)
 	if err != nil {
-		return nil, fmt.Errorf("GetUserFromSession: %w", err)
+		return domain.User{}, fmt.Errorf("GetUserFromSession: %w", err)
 	}
 
-	var user store.UserSession
-	if userSession.Values["id"] == nil {
-		return nil, fmt.Errorf("userSessionCookie user id is not set")
+	if userSession.Values[idKey] == nil {
+		return domain.User{}, fmt.Errorf("userSessionCookie user id is not set")
 	}
 
-	user = store.UserSession{
-		Id:    userSession.Values["id"].(int),
-		Email: userSession.Values["email"].(string),
+	stravaAccessToken, _ := userSession.Values[stravaAccessKey].(string)
+	stravaRefreshToken, _ := userSession.Values[stravaRefreshKey].(string)
+	user := domain.User{
+		Id:    userSession.Values[idKey].(int),
+		Email: userSession.Values[emailKey].(string),
+		Strava: domain.StravaInfo{
+			AccessToken:  &stravaAccessToken,
+			RefreshToken: &stravaRefreshToken,
+		},
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func (s GorillaCookiesSessionsStore) DeleteUserSession(w http.ResponseWriter, r *http.Request) error {
-	session, _ := s.store.Get(r, s.userSessionKey)
+	session, _ := s.store.Get(r, userKey)
 	session.Options.MaxAge = -1
 	return session.Save(r, w)
 }
 
 type GorillaCookiesSessionsStore struct {
-	userSessionKey string
-	store          *sessions.CookieStore
+	store *sessions.CookieStore
 }
 
-func NewGorillaCookiesSessionsStore(secret []byte, userSessionKey string) *GorillaCookiesSessionsStore {
+func NewGorillaCookiesSessionsStore(secret []byte) *GorillaCookiesSessionsStore {
 	store := sessions.NewCookieStore(secret)
 
 	return &GorillaCookiesSessionsStore{
-		store:          store,
-		userSessionKey: userSessionKey,
+		store: store,
 	}
 }
+
+var (
+	userKey          = "User"
+	idKey            = "Id"
+	emailKey         = "Email"
+	stravaAccessKey  = "StravaAccess"
+	stravaRefreshKey = "StravaRefresh"
+)

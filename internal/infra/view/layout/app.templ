@@ -1,8 +1,11 @@
 package layout
 
-import "github.com/pttrulez/activitypeople/internal/infra/view/ui"
+import (
+	"github.com/pttrulez/activitypeople/internal/infra/view/ui"
+	"github.com/pttrulez/activitypeople/internal/domain"
+)
 
-templ App(nav bool) {
+templ App(user domain.User) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="halloween">
 		<head>
@@ -17,8 +20,8 @@ templ App(nav bool) {
 		</head>
 		<body>
 		<div class="container mx-auto">
-			if nav {
-				@ui.Navigation()
+			if user.Id > 0 {
+				@ui.Navigation(user)
 			}
 			{ children... }
 		</div>
