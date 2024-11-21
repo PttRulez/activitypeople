@@ -1,0 +1,22 @@
+package home
+
+import (
+	"github.com/pttrulez/activitypeople/internal/domain"
+ 	"github.com/pttrulez/activitypeople/internal/infra/view/layout"
+)
+
+templ Index(stravaOAuthLink string, user domain.User) {
+	@layout.App(user) {
+		if user.Strava.AccessToken == nil || *user.Strava.AccessToken == "" {
+			<div class="text-center">
+				<h1 class="text-2xl mt-10 mb-10">Здарова, атлет. Чтобы посмотреть свои активности, необходимо законнектить сраву</h1>
+				<a href={templ.SafeURL(stravaOAuthLink)} class="btn btn-primary">Привяжите свой аккаунт Strava</a>
+			</div>	
+		} else {
+			<div class="text-center">
+				<h1 class="text-2xl mt-10 mb-10">Приветствуем вас, {user.Name}</h1>
+				<a href="/activities" hx-target="body" hx-push-url="true" class="btn btn-primary">Ваши активити</a>
+			</div>
+		}
+	}
+}

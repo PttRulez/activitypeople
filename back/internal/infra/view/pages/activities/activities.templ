@@ -1,0 +1,100 @@
+package activities
+
+import (
+	"github.com/pttrulez/activitypeople/internal/infra/view/layout"
+	"github.com/pttrulez/activitypeople/internal/infra/view/components"
+	"github.com/pttrulez/activitypeople/internal/infra/view/ui"
+	"github.com/pttrulez/activitypeople/internal/domain"
+	"fmt"
+)
+
+type Pagination struct {
+	NextButtonLink string
+	PrevButtonLink string
+	MonthName     string
+}
+
+templ OnClickText() {
+	"daisymodal.showModal()"
+}
+
+templ Index(days []domain.DiaryDay, p Pagination, user domain.User) {
+	@layout.App(user) {
+		<div class="py-12">
+			<div class="p-4 text-3xl flex justify-between">
+				<div class="min-w-56 flex justify-between">
+					<span hx-get={p.PrevButtonLink} hx-target="body" hx-push-url="true">
+						<i class="fa-solid fa-arrow-left  cursor-pointer"></i> 
+					</span>
+					<span>{p.MonthName}</span>
+					if p.NextButtonLink != "" {
+						<span hx-get={p.NextButtonLink} hx-target="body" hx-push-url="true">
+							<i class="fa-solid fa-arrow-right cursor-pointer"></i>
+						</span>
+					} else {
+						<span class="invisible">
+							<i class="fa-solid fa-arrow-right cursor-pointer"></i>
+						</span>
+					}
+				</div>
+				<div>
+					<button class="btn btn-secondary" onclick=@OnClickText()>
+						Add Food
+		    	</button>
+					<button hx-get="/sync-strava" class="btn btn-primary">
+						Sync Strava
+						<i class="fa-solid fa-spinner animate-spin htmx-indicator"></i>		
+		    	</button>
+				</div>
+			</div> 
+			<div class="grid grid-cols-7 gap-4">
+				for _, day := range days {
+					@DiaryDayCard(day)
+				}
+			</div>
+		</div>
+		@ui.DaisyModal(ui.DaisyModalOpts{Title: "Savadikap", DialogId: "daisymodal" }) {
+			@components.FoodForm(domain.Food{})
+		}
+	}
+}
+
+templ DiaryDayCard(diary domain.DiaryDay) {
+	<a class="card bg-base-100 shadow-xl border border-gray-700 cursor-pointer">
+		if diary.Name == "" {
+			<div class="card-body"></div>
+		} else {
+	  <div class="card-body">
+			<p>{diary.Date.Format("02.01.2006")}</p>
+			<h2 class="card-title">
+				{diary.Name}
+			</h2>
+	    <div class="flex justify-between">
+				<span>
+					{fmt.Sprintf("%02d:%02d", diary.TotalTime/3600, (diary.TotalTime % 3600) / 60)}
+				</span>
+				if diary.Distance > 0 {
+					<span>{fmt.Sprintf("%.2f", float64(diary.Distance) / 1000)} km</span>
+				}
+			</div>
+			<div className="card-actions justify-end">
+				<div class="badge badge-outline badge-primary">@SportTypeIcon(diary.SportType)</div>
+			</div>
+	  </div>
+		}
+	</a>
+}
+
+
+templ SportTypeIcon(sportType domain.SportType) {
+	switch sportType {
+		case domain.STRun:
+			<i class="fa-solid fa-person-running"></i>
+		case domain.STRide:
+			<i class="fa-solid fa-bicycle"></i>
+		case domain.STXCSki:
+			<i class="fa-solid fa-person-skiing-nordic"></i>
+		default:
+			<i class="fa-solid fa-dog"></i>
+	}
+}

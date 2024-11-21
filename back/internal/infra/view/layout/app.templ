@@ -1,0 +1,32 @@
+package layout
+
+import (
+	"github.com/pttrulez/activitypeople/internal/infra/view/ui"
+	"github.com/pttrulez/activitypeople/internal/domain"
+)
+
+templ App(user domain.User) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="halloween">
+		<head>
+			<title>ActivityPeople</title>
+			<link rel="icon" type="image/x-icon" href="/public/favicon.png"/>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<link rel="stylesheet" href="/public/styles.css"/>
+			<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.9"></script>
+			// <script src="/public/js/my.js" defer></script>
+			<script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+		</head>
+		<body>
+		<div class="container mx-auto">
+			if user.Id > 0 {
+				@ui.Navigation(user)
+			}
+			{ children... }
+		</div>
+		</body>
+	</html>
+}
