@@ -1,5 +1,13 @@
 package handler
 
+import (
+	"errors"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+	"github.com/pttrulez/activitypeople/internal/domain"
+)
+
 // import (
 // 	"context"
 // 	"fmt"
@@ -8,6 +16,27 @@ package handler
 // 	"github.com/go-playground/validator/v10"
 // 	"github.com/pttrulez/activitypeople/internal/domain"
 // )
+
+func GetUserFromContext(c echo.Context) (domain.User, error) {
+	token, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return domain.User{}, errors.New("Failed to get Token from echo context")
+	}
+
+	claims, ok := token.Claims.(JwtClaims)
+	if !ok {
+		return domain.User{}, errors.New("Failed to cast claims to jwtClaims")
+	}
+
+	user := domain.User{
+		Email: claims.Email,
+		Id:    claims.Id,
+		Name:  claims.Name,
+		Role:  claims.Role,
+	}
+
+	return user, nil
+}
 
 // func GetUserFromRequest(r *http.Request) domain.User {
 // 	return GetUserFromContext(r.Context())

@@ -11,7 +11,7 @@ import (
 	"github.com/pttrulez/activitypeople/internal/infra/http-server/contracts"
 )
 
-type jwtClaims struct {
+type JwtClaims struct {
 	Id    int
 	Name  string
 	Email string
@@ -35,7 +35,7 @@ func (c *AuthController) Login(e echo.Context) error {
 		return err
 	}
 
-	claims := &jwtClaims{
+	claims := &JwtClaims{
 		Id:    user.Id,
 		Name:  user.Name,
 		Email: user.Email,
@@ -68,17 +68,9 @@ func (c *AuthController) Login(e echo.Context) error {
 
 	return e.JSON(http.StatusOK, echo.Map{
 		"accessToken": accessToken,
-		// "refreshToken": refreshToken,
+		"user":        user.JSON(),
 	})
 }
-
-// func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) error {
-// 	err := c.sessionStore.ClearUserSession(w, r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return HtmxRedirect(w, r, "/")
-// }
 
 func (c *AuthController) Register(e echo.Context) error {
 	var r contracts.RegisterUserRequest
@@ -97,7 +89,7 @@ func (c *AuthController) Register(e echo.Context) error {
 		return err
 	}
 
-	claims := &jwtClaims{
+	claims := &JwtClaims{
 		Id:    user.Id,
 		Name:  user.Name,
 		Email: user.Email,
@@ -124,33 +116,6 @@ func (c *AuthController) Register(e echo.Context) error {
 		"refreshToken": refreshToken,
 	})
 }
-
-// func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) error {
-// 	req := contracts.RegisterUserRequest{
-// 		ConfirmPassword: r.FormValue("confirmPassword"),
-// 		Email:           r.FormValue("email"),
-// 		Name:            r.FormValue("name"),
-// 		Password:        r.FormValue("password"),
-// 		Role:            domain.Scoof,
-// 	}
-// 	valid, errs := Validate(req)
-// 	if !valid {
-// 		return render(r, w, auth.RegisterForm(req, errs))
-// 	}
-// 	newUser, err := c.authService.Register(r.Context(), req.Email, req.Password, req.Name)
-// 	if errors.Is(err, service.ErrAlreadyExists) {
-// 		return render(r, w, auth.RegisterForm(req, map[string]string{
-// 			"Email": "email already exists",
-// 		}))
-// 	}
-// 	if err != nil {
-// 		return render(r, w, auth.RegisterForm(req, map[string]string{
-// 			"Email": err.Error(),
-// 		}))
-// 	}
-// 	c.sessionStore.SetUserIntoSession(w, r, newUser)
-// 	return HtmxRedirect(w, r, "/")
-// }
 
 type AuthService interface {
 	Login(ctx context.Context, email, password string) (domain.User, error)

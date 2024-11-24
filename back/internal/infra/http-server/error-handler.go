@@ -13,13 +13,15 @@ func HTTPErrorHandler(err error, c echo.Context) {
 	var validateErr validator.ValidationErrors
 	if errors.As(err, &validateErr) {
 		c.JSON(http.StatusUnprocessableEntity, validationErrsToResponse(validateErr))
+		return
 	}
+
+	c.String(http.StatusInternalServerError, err.Error())
 }
 
 func validationErrsToResponse(errs validator.ValidationErrors) map[string]string {
 	mappedErrors := map[string]string{}
 	for _, err := range errs {
-		fmt.Println(err.ActualTag(), err.Field())
 		switch err.ActualTag() {
 		case "required":
 			mappedErrors[err.Field()] += fmt.Sprintf("Поле %s обязательно для заполнения", err.Field())

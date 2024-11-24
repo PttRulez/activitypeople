@@ -2,7 +2,7 @@ package converter
 
 import (
 	"github.com/pttrulez/activitypeople/internal/domain"
-	"github.com/pttrulez/activitypeople/internal/infra/http_server/contracts"
+	"github.com/pttrulez/activitypeople/internal/infra/http-server/contracts"
 )
 
 func FromFoodReqToFood(req contracts.CreateFoodRequest) domain.Food {

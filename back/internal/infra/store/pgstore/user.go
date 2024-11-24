@@ -45,6 +45,7 @@ func (pg *UserPostgres) GetByEmail(ctx context.Context, email string) (domain.Us
 		return domain.User{}, store.ErrNotFound
 	}
 	if err != nil {
+
 		return domain.User{}, err
 	}
 

@@ -2,10 +2,12 @@ package activities
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/pttrulez/activitypeople/internal/domain"
+	"github.com/pttrulez/activitypeople/internal/infra/store"
 	"github.com/pttrulez/activitypeople/internal/infra/strava"
 )
 
@@ -19,7 +21,11 @@ func (s *Service) GetActivities(ctx context.Context, user domain.User, filters d
 }
 
 func (s *Service) SyncActivities(ctx context.Context, user domain.User) error {
-	client := s.stravaBase.NewClient(*user.Strava.AccessToken, *user.Strava.RefreshToken,
+	stravaInfo, err := s.stravaRepo.GetByUserId(ctx, user.Id)
+	if err != nil {
+		return err
+	}
+	client := s.stravaBase.NewClient(*stravaInfo.AccessToken, *stravaInfo.RefreshToken,
 		s.makeStoreTokensFunc(ctx, user.Id))
 	// Собираем все страва активности юзера и делаем сет, чтобы не доабвлять дубли
 	existingActivities, err := s.activityRepo.Get(ctx, user.Id, domain.ActivityFilters{
@@ -77,20 +83,35 @@ func (s *Service) SyncActivities(ctx context.Context, user domain.User) error {
 	return nil
 }
 
-func (s *Service) OAuthStrava(ctx context.Context, userCode string, userID int) (string, string, error) {
+func (s *Service) OAuthStrava(ctx context.Context, userCode string, userID int) error {
 	client := s.stravaBase.NewClient("", "", s.makeStoreTokensFunc(ctx, userID))
 
 	data, err := client.OAuth(userCode)
 	if err != nil {
-		return "", "", err
+		return err
+	}
+	_, err = s.stravaRepo.GetByUserId(ctx, userID)
+	if errors.Is(err, store.ErrNotFound) {
+		fmt.Println("ErrNotFound")
+		//  Вставляем инфу, если авторизуется в страве первый раз
+		err = s.stravaRepo.Insert(ctx, data.AccessToken, data.RefreshToken, userID)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if err != nil {
+		fmt.Println("err != nil", err)
+		return err
 	}
 
-	err = s.stravaRepo.Insert(ctx, data.AccessToken, data.RefreshToken, userID)
+	// Апдейтим инфу, если такая уже есть у юзера
+	err = s.stravaRepo.UpdateUserStravaInfo(ctx, data.AccessToken, data.RefreshToken,
+		userID)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
-	return data.AccessToken, data.RefreshToken, nil
+	return nil
 }
 
 func NewService(activityRepo ActivitiesRepository, stravaBase *strava.Base,
@@ -115,6 +136,7 @@ type ActivitiesRepository interface {
 }
 
 type StravaRepository interface {
+	GetByUserId(ctx context.Context, userId int) (domain.StravaInfo, error)
 	Insert(ctx context.Context, accessToken string, refreshToken string, userId int) error
 	UpdateUserStravaInfo(ctx context.Context, accessToken string,
 		refreshToken string, userId int) error

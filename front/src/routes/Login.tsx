@@ -1,16 +1,16 @@
-import activityApi from "@/api/activitypeople";
+import axios from "@/api/activitypeople";
+import { UserInfo } from "@/context/AuthProvider";
 import useAuth from "@/hooks/useAuth";
 import { LoginData } from "@/validation/auth";
+import { AxiosResponse } from "axios";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
-import { userKey } from "..";
 
 const Login = () => {
   const {
     formState: { errors },
     handleSubmit,
     register,
-    setError,
   } = useForm<LoginData>();
   const { setAuth } = useAuth();
   const navigate = useNavigate();
@@ -19,11 +19,8 @@ const Login = () => {
 
   const onSubmit = async (c: LoginData) => {
     try {
-      let res = await activityApi.login(c);
-      const accessToken = res.data.accessToken;
-
-      localStorage.setItem(userKey, JSON.stringify({ accessToken }));
-      setAuth({ accessToken });
+      let res: AxiosResponse<UserInfo> = await axios.post("/login", c);
+      setAuth((prev) => res.data);
 
       navigate(from, { replace: true });
     } catch (e: any) {

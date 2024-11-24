@@ -59,7 +59,6 @@ func (api *Client) OAuth(userCode string) (*OAuthResponse, error) {
 	url := fmt.Sprintf("https://www.strava.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code",
 		api.appClientId, api.appClientSecret, userCode,
 	)
-
 	b := bytes.NewBuffer([]byte(""))
 	r, err := http.Post(url, "application/json; charset=utf-8", b)
 	if err != nil {
@@ -75,7 +74,6 @@ func (api *Client) OAuth(userCode string) (*OAuthResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("stravaApi OAuth() json.NewDecoder: \n%s", err)
 	}
-
 	responseData.AccessToken = m["access_token"].(string)
 	responseData.RefreshToken = m["refresh_token"].(string)
 	return responseData, nil

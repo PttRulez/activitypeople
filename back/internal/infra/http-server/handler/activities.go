@@ -1,95 +1,83 @@
 package handler
 
-// import (
-// 	"context"
-// 	"fmt"
-// 	"math"
-// 	"net/http"
-// 	"strconv"
-// 	"time"
+import (
+	"context"
+	"net/http"
+	"strconv"
+	"time"
 
-// 	"github.com/pttrulez/activitypeople/internal/domain"
-// 	activitiesview "github.com/pttrulez/activitypeople/internal/infra/view/pages/activities"
-// )
+	"github.com/labstack/echo/v4"
+	"github.com/pttrulez/activitypeople/internal/domain"
+	"github.com/pttrulez/activitypeople/internal/infra/http-server/contracts"
+	"github.com/pttrulez/activitypeople/internal/infra/http-server/converter"
+)
 
-// func (c *ActivitiesController) GetActivitiesPage(w http.ResponseWriter, r *http.Request) error {
-// 	user := GetUserFromRequest(r)
-// 	now := time.Now()
-// 	year := now.Year()
-// 	month := now.Month()
+func (c *ActivitiesController) OAuthStrava(e echo.Context) error {
+	code := e.QueryParam("code")
+	user := e.Get("u").(domain.User)
 
-// 	if r.URL.Query().Get("year") != "" {
-// 		yearNumber, _ := strconv.Atoi(r.URL.Query().Get("year"))
-// 		if yearNumber <= year && 2000 < yearNumber {
-// 			year = yearNumber
-// 		}
-// 	}
+	return c.activitiesService.OAuthStrava(e.Request().Context(), code, user.Id)
+}
 
-// 	if r.URL.Query().Get("month") != "" {
-// 		monthNumber, err := strconv.Atoi(r.URL.Query().Get("month"))
-// 		if err == nil && monthNumber >= 1 || monthNumber <= 12 {
-// 			month = time.Month(monthNumber)
-// 		}
-// 	}
+func (c *ActivitiesController) GetActivities(e echo.Context) error {
+	user := e.Get("u").(domain.User)
+	now := time.Now()
+	year := now.Year()
+	month := now.Month()
 
-// 	t := time.Date(year, month, 32, 0, 0, 0, 0, time.UTC)
-// 	daysInMonth := 32 - t.Day()
-// 	firstDay := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-// 	numberOfRows := math.Ceil((float64(daysInMonth) + float64(firstDay.Weekday()) - 1) / 7)
-// 	activitiesDate := time.Date(year, month, 1, 1, 1, 1, 1, time.Local)
+	if e.QueryParam("year") != "" {
+		yearNumber, _ := strconv.Atoi(e.QueryParam("year"))
+		if yearNumber <= year && 2000 < yearNumber {
+			year = yearNumber
+		}
+	}
 
-// 	activitiesList, err := c.activitiesService.GetActivities(r.Context(), user,
-// 		domain.ActivityFilters{
-// 			From:  time.Date(year, month, 1, 0, 0, 0, 0, time.UTC),
-// 			Until: time.Date(year, month, daysInMonth, 0, 0, 0, 0, time.UTC),
-// 		})
-// 	if err != nil {
-// 		return activitiesview.Index([]domain.DiaryDay{},
-// 			createPagination(activitiesDate), user).Render(r.Context(), w)
-// 	}
+	if e.QueryParam("month") != "" {
+		monthNumber, err := strconv.Atoi(e.QueryParam("month"))
+		if err == nil && monthNumber >= 1 || monthNumber <= 12 {
+			month = time.Month(monthNumber)
+		}
+	}
 
-// 	days := make([]domain.DiaryDay, int(numberOfRows)*7)
-// 	for _, a := range activitiesList {
-// 		index := int(firstDay.Weekday()) + int(a.Date.Day()) - 2
-// 		days[index].Activity = a
-// 	}
+	daysInMonth := 32 - time.Date(year, month, 32, 0, 0, 0, 0, time.UTC).Day()
 
-// 	return activitiesview.Index(days, createPagination(activitiesDate), user).
-// 		Render(r.Context(), w)
-// }
+	activitiesList, err := c.activitiesService.GetActivities(e.Request().Context(), user,
+		domain.ActivityFilters{
+			From:  time.Date(year, month, 1, 0, 0, 0, 0, time.UTC),
+			Until: time.Date(year, month, daysInMonth, 0, 0, 0, 0, time.UTC),
+		})
+	if err != nil {
+		return err
+	}
 
-// func createPagination(d time.Time) activitiesview.Pagination {
-// 	prevDate := d.AddDate(0, -1, 1)
-// 	prevButtonLink := fmt.Sprintf("/activities?month=%d&year=%d", int(prevDate.Month()), prevDate.Year())
-// 	nextButtonLink := ""
+	activitiesResponse := make([]contracts.ActivityResponse, 0, len(activitiesList))
+	for _, a := range activitiesList {
+		activitiesResponse = append(activitiesResponse,
+			converter.FromActivityToActivityResponse(a))
+	}
+	return e.JSON(http.StatusOK, activitiesResponse)
+}
 
-// 	now := time.Now()
-// 	if !(d.Year() == now.Year() && d.Month() == now.Month()) {
-// 		nextDate := d.AddDate(0, 1, 1)
-// 		nextButtonLink = fmt.Sprintf("/activities?month=%d&year=%d", int(nextDate.Month()), nextDate.Year())
-// 	}
+func (c *ActivitiesController) SyncStrava(e echo.Context) error {
+	user := e.Get("u").(domain.User)
+	return c.activitiesService.SyncActivities(e.Request().Context(), user)
+}
 
-// 	return activitiesview.Pagination{
-// 		NextButtonLink: nextButtonLink,
-// 		PrevButtonLink: prevButtonLink,
-// 		MonthName:      d.Month().String(),
-// 	}
-// }
+type ActivitiesController struct {
+	activitiesService AcitivitiesService
+}
 
-// type ActivitiesController struct {
-// 	Handler
-// 	activitiesService AcitivitiesService
-// }
+func NewActivitiesController(
+	activitiesService AcitivitiesService,
+) *ActivitiesController {
+	return &ActivitiesController{
+		activitiesService: activitiesService,
+	}
+}
 
-// func NewActivitiesController(
-// 	activitiesService AcitivitiesService,
-// ) *ActivitiesController {
-// 	return &ActivitiesController{
-// 		activitiesService: activitiesService,
-// 	}
-// }
-
-// type AcitivitiesService interface {
-// 	GetActivities(ctx context.Context, user domain.User, filters domain.ActivityFilters) (
-// 		[]domain.Activity, error)
-// }
+type AcitivitiesService interface {
+	GetActivities(ctx context.Context, user domain.User,
+		filters domain.ActivityFilters) ([]domain.Activity, error)
+	OAuthStrava(ctx context.Context, userCode string, userID int) error
+	SyncActivities(ctx context.Context, user domain.User) error
+}

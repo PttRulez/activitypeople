@@ -1,8 +1,15 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { userKey } from "..";
+import { Role } from "@/types/enums";
 
 export type UserInfo = {
   accessToken?: string;
+  user: {
+    email: string;
+    name: string;
+    role: Role;
+    stravaLinked: boolean;
+  };
 };
 
 export type AuthInfo = {
@@ -11,14 +18,30 @@ export type AuthInfo = {
 };
 const AuthContext = createContext<AuthInfo>({} as AuthInfo);
 
+export const emptyUser: UserInfo = {
+  accessToken: undefined,
+  user: {
+    stravaLinked: false,
+  },
+} as UserInfo;
+
 export const AuthProvider = ({ children }: { children: JSX.Element }) => {
-  let user: UserInfo = {} as UserInfo;
   const localItem = localStorage.getItem(userKey);
+  console.log("localItem", localItem);
+  let user = emptyUser;
   if (localItem) {
     user = JSON.parse(localItem);
   }
 
   const [auth, setAuth] = useState<UserInfo>(user);
+
+  useEffect(() => {
+    if (auth) {
+      localStorage.setItem(userKey, JSON.stringify(auth));
+    } else {
+      localStorage.setItem(userKey, auth);
+    }
+  }, [auth]);
 
   return (
     <AuthContext.Provider value={{ auth, setAuth }}>

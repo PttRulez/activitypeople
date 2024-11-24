@@ -4,6 +4,7 @@ import { RouterProvider } from "react-router-dom";
 import "./index.css";
 import router from "./router";
 import { AuthProvider } from "./context/AuthProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 type localKey = string;
 export const userKey: localKey = "acitivityuser";
@@ -11,10 +12,15 @@ export const userKey: localKey = "acitivityuser";
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
+
+const queryClient = new QueryClient();
+
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

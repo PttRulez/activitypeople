@@ -38,7 +38,7 @@ func calculatePace(movingTime float64, distance float64) (pace int, paceString s
 	minutes := int(math.Floor(secondsPerKm / 60))
 	seconds := int(secondsPerKm) % 60
 	pace = int(secondsPerKm)
-	paceString = fmt.Sprintf("%02d:%02d", minutes, seconds)
+	paceString = fmt.Sprintf("%d:%02d", minutes, seconds)
 	return
 }
 

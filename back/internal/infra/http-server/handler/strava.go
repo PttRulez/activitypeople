@@ -2,49 +2,25 @@ package handler
 
 // import (
 // 	"context"
-// 	"fmt"
-// 	"net/http"
 
+// 	"github.com/labstack/echo/v4"
 // 	"github.com/pttrulez/activitypeople/internal/domain"
-// 	"github.com/pttrulez/activitypeople/internal/infra/view/pages/home"
 // )
 
-// func (c *StravaController) StravaOAuthCallback(w http.ResponseWriter, r *http.Request) error {
-// 	code := r.URL.Query().Get("code")
-// 	if code == "" {
-// 		return HtmxRedirect(w, r, "/")
-// 	}
+// // import (
+// // 	"context"
+// // 	"fmt"
+// // 	"net/http"
 
-// 	user := GetUserFromRequest(r)
-// 	aToken, rToken, err := c.stravaService.OAuthStrava(r.Context(), code, user.Id)
-// 	if err != nil {
-// 		fmt.Printf("StravaOAuthCallback error: %s\n", err)
-// 		return HtmxRedirect(w, r, "/")
-// 	}
+// // 	"github.com/pttrulez/activitypeople/internal/domain"
+// // 	"github.com/pttrulez/activitypeople/internal/infra/view/pages/home"
+// // )
 
-// 	user.Strava.AccessToken = &aToken
-// 	user.Strava.RefreshToken = &rToken
 
-// 	err = c.sessionStore.SetUserIntoSession(w, r, user)
-// 	if err != nil {
-// 		return render(r, w, home.Index("", user))
-// 	}
 
-// 	return HtmxRedirect(w, r, "/")
-// }
 
-// func (c *StravaController) SyncStrava(w http.ResponseWriter, r *http.Request) error {
-// 	user := GetUserFromRequest(r)
-// 	err := c.stravaService.SyncActivities(r.Context(), user)
-// 	if err != nil {
-// 		fmt.Printf("SyncStrava error: %s\n", err)
-// 	}
-
-// 	return HtmxRedirect(w, r, "/")
-// }
 
 // type StravaController struct {
-// 	sessionStore  SessionStore
 // 	stravaService StravaService
 // }
 
@@ -54,11 +30,9 @@ package handler
 // }
 
 // func NewStravaController(
-// 	sessionStore SessionStore,
 // 	stravaService StravaService,
 // ) *StravaController {
 // 	return &StravaController{
-// 		sessionStore:  sessionStore,
 // 		stravaService: stravaService,
 // 	}
 // }
