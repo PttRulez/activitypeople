@@ -12,11 +12,11 @@ import (
 func (pg *FoodPostgres) Delete(ctx context.Context, foodID int, userID int) error {
 	const op = "FoodPostgres.Delete"
 
-	q := sq.Delete("foods").
+	q := pg.sq.Delete("foods").
 		Where(sq.Eq{"user_id": userID}).
 		Where(sq.Eq{"id": foodID})
 
-	_, err := q.ExecContext(ctx)
+	_, err := q.RunWith(pg.db).ExecContext(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -24,13 +24,13 @@ func (pg *FoodPostgres) Delete(ctx context.Context, foodID int, userID int) erro
 	return nil
 }
 
-func (pg *FoodPostgres) Insert(ctx context.Context, a domain.Food) error {
+func (pg *FoodPostgres) Insert(ctx context.Context, f domain.Food) error {
 	const op = "FoodPostgres.Insert"
-	q := sq.Insert("foods").
-		Columns("carbs", "calories", "fat", "name", "public", "protein", "user_id").
-		Values(a.Carbs, a.Calories, a.Fat, a.Name, a.Public, a.Protein, a.UserID)
+	q := pg.sq.Insert("foods").
+		Columns("calories", "carbs", "created_by_admin", "fat", "name", "protein", "user_id").
+		Values(f.Calories, f.Carbs, f.CreatedByAdmin, f.Fat, f.Name, f.Protein, f.UserID)
 
-	_, err := q.ExecContext(ctx)
+	_, err := q.RunWith(pg.db).ExecContext(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -41,20 +41,22 @@ func (pg *FoodPostgres) Insert(ctx context.Context, a domain.Food) error {
 func (pg *FoodPostgres) Search(ctx context.Context, q string) ([]domain.Food, error) {
 	const op = "FoodPostgres.Search"
 
-	query := sq.Select("carbs", "calories", "fat", "name", "public", "protein", "user_id").
+	query := pg.sq.Select("id", "carbs", "calories", "fat", "name", "created_by_admin",
+		"protein", "user_id").
 		From("foods").
-		Where(sq.Like{"name": q})
+		Where(sq.ILike{"name": fmt.Sprintf("%%%v%%", q)})
 
-	rows, err := query.QueryContext(ctx)
+	rows, err := query.RunWith(pg.db).QueryContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer rows.Close()
-
-	var foods []domain.Food
+	fmt.Println(query.ToSql())
+	foods := make([]domain.Food, 0)
 	for rows.Next() {
 		var f domain.Food
-		err := rows.Scan(&f.Carbs, &f.Calories, &f.Fat, &f.Name, &f.Public, &f.Protein, &f.UserID)
+		err := rows.Scan(&f.ID, &f.Carbs, &f.Calories, &f.Fat, &f.Name, &f.CreatedByAdmin,
+			&f.Protein, &f.UserID)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
@@ -66,8 +68,12 @@ func (pg *FoodPostgres) Search(ctx context.Context, q string) ([]domain.Food, er
 
 type FoodPostgres struct {
 	db *sql.DB
+	sq sq.StatementBuilderType
 }
 
 func NewFoodPostgres(db *sql.DB) *FoodPostgres {
-	return &FoodPostgres{db: db}
+	return &FoodPostgres{
+		db: db,
+		sq: sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+	}
 }

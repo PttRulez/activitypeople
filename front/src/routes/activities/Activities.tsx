@@ -1,17 +1,12 @@
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  UseQueryResult,
-} from "@tanstack/react-query";
-import dayjs from "dayjs";
-import { useEffect, useMemo } from "react";
-import ActivityCard from "./ActivityCard";
 import { ActivityResponse } from "@/types/activity";
 import { monthNameMap } from "@/types/enums";
-import { Link, useParams, useSearchParams } from "react-router-dom";
 import { getDay } from "@/utils/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import ActivityCard from "./ActivityCard";
 
 type ActivitiesState = {
   monthName: string;
@@ -30,7 +25,6 @@ const Activities = () => {
   let date = dayjs();
   let year = Number(searchParams.get("year"));
   let month = Number(searchParams.get("month"));
-  let day;
   if (year) {
     date = date.year(year);
   } else {

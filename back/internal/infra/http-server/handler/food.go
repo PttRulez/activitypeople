@@ -1,86 +1,88 @@
 package handler
 
-// import (
-// 	"context"
-// 	"encoding/json"
-// 	"errors"
-// 	"net/http"
-// 	"strconv"
+import (
+	"context"
+	"errors"
+	"net/http"
+	"strconv"
 
-// 	"github.com/go-playground/validator/v10"
-// 	"github.com/pttrulez/activitypeople/internal/domain"
-// 	"github.com/pttrulez/activitypeople/internal/infra/http_server/contracts"
-// 	"github.com/pttrulez/activitypeople/internal/infra/http_server/converter"
-// 	"github.com/pttrulez/activitypeople/internal/logger"
-// )
+	"github.com/labstack/echo/v4"
+	"github.com/pttrulez/activitypeople/internal/domain"
+	"github.com/pttrulez/activitypeople/internal/infra/http-server/contracts"
+	"github.com/pttrulez/activitypeople/internal/infra/http-server/converter"
+)
 
-// func (c *FoodController) CreateFood(w http.ResponseWriter, r *http.Request) error {
-// 	user := GetUserFromRequest(r)
+func (c *FoodController) CreateFood(e echo.Context) error {
+	user := e.Get("u").(domain.User)
 
-// 	var err error
-// 	var req contracts.CreateFoodRequest
-// 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-// 		logger.Debug()
-// 		w.WriteHeader(http.StatusCreated)
-// 		return err
-// 	}
+	var req contracts.CreateFoodRequest
+	err := e.Bind(&req)
+	if err != nil {
+		return err
+	}
+	err = ValidateStruct(req)
+	if err != nil {
+		return err
+	}
 
-// 	if err = c.validator.Struct(req); err != nil {
-// 		var validateErr validator.ValidationErrors
-// 		errors.As(err, &validateErr)
-// 		w.WriteHeader(http.StatusBadRequest)
-// 		return validateErr
-// 	}
+	food := converter.FromFoodReqToFood(req)
+	if user.Role == domain.Admin {
+		food.CreatedByAdmin = true
+	}
 
-// 	err = c.foodService.CreateFood(r.Context(), converter.FromFoodReqToFood(req), user.Id)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	w.WriteHeader(http.StatusBadRequest)
-// 	return nil
-// }
+	err = c.foodService.CreateFood(e.Request().Context(), food, user.Id)
+	if err != nil {
+		return err
+	}
 
-// func (c *FoodController) DeleteFood(w http.ResponseWriter, r *http.Request) error {
-// 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-// 	if err != nil {
-// 		return errors.New("id is required")
-// 	}
+	return e.String(http.StatusCreated, "Food created successfully")
+}
 
-// 	user := GetUserFromRequest(r)
+func (c *FoodController) DeleteFood(e echo.Context) error {
+	user := e.Get("u").(domain.User)
 
-// 	err = c.foodService.DeleteFood(r.Context(), id, user.Id)
-// 	if err != nil {
-// 		return err
-// 	}
+	idStr := e.QueryParam("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return errors.New("not valid Id format")
+	}
 
-// 	return nil
-// }
+	err = c.foodService.DeleteFood(e.Request().Context(), id, user.Id)
+	if err != nil {
+		return err
+	}
 
-// func (c *FoodController) Search(w http.ResponseWriter, r *http.Request) error {
-// 	q := r.URL.Query().Get("q")
+	return nil
+}
 
-// 	foods, err := c.foodService.Search(r.Context(), q)
-// 	if err != nil {
-// 		return err
-// 	}
+func (c *FoodController) Search(e echo.Context) error {
+	q := e.QueryParam("q")
 
-// 	return writeJSON(w, http.StatusOK, foods)
-// }
+	foods, err := c.foodService.Search(e.Request().Context(), q)
+	if err != nil {
+		return err
+	}
 
-// func NewFoodController(foodService FoodService, validator *validator.Validate) *FoodController {
-// 	return &FoodController{
-// 		foodService: foodService,
-// 		validator:   validator,
-// 	}
-// }
+	res := make([]contracts.FoodResponse, len(foods))
+	for i, f := range foods {
+		res[i] = converter.FromFoodToFoodresponse(f)
+	}
 
-// type FoodController struct {
-// 	foodService FoodService
-// 	validator   *validator.Validate
-// }
+	return e.JSON(http.StatusOK, res)
+}
 
-// type FoodService interface {
-// 	CreateFood(ctx context.Context, f domain.Food, userID int) error
-// 	DeleteFood(ctx context.Context, foodID int, userID int) error
-// 	Search(ctx context.Context, q string) ([]domain.Food, error)
-// }
+func NewFoodController(foodService FoodService) *FoodController {
+	return &FoodController{
+		foodService: foodService,
+	}
+}
+
+type FoodController struct {
+	foodService FoodService
+}
+
+type FoodService interface {
+	CreateFood(ctx context.Context, f domain.Food, userID int) error
+	DeleteFood(ctx context.Context, foodID int, userID int) error
+	Search(ctx context.Context, q string) ([]domain.Food, error)
+}

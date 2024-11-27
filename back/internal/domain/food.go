@@ -3,20 +3,22 @@ package domain
 import "time"
 
 type Food struct {
-	ID       int
-	Name     string
-	Calories int
-	Carbs    int
-	Fat      int
-	Protein  int
-	Public   bool
-	UserID   int
+	Calories       int
+	Carbs          int
+	CreatedByAdmin bool
+	Fat            int
+	ID             int
+	Name           string
+	Protein        int
+	UserID         int
 }
 
-type FoodItem struct {
-	Food
-	Weight        int
-	TotalCalories int
+type FoodInMeal struct {
+	Calories int
+	Name     string
+	Id       int
+	Weight   int
+	MealId   int
 }
 
 type Meal struct {
@@ -24,6 +26,11 @@ type Meal struct {
 	Date     time.Time
 	Id       int
 	Name     string
-	Foods    []FoodItem
+	Foods    []FoodInMeal
 	UserId   int
+}
+
+type MealFilters struct {
+	From  time.Time
+	Until time.Time
 }

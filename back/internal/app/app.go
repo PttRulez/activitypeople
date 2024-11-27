@@ -16,6 +16,7 @@ import (
 	"github.com/pttrulez/activitypeople/internal/infra/strava"
 	"github.com/pttrulez/activitypeople/internal/service/activities"
 	"github.com/pttrulez/activitypeople/internal/service/auth"
+	"github.com/pttrulez/activitypeople/internal/service/food"
 )
 
 func StartServer() {
@@ -24,10 +25,12 @@ func StartServer() {
 
 	// stores
 	pgConn := pgstore.CreatePGConnection(cfg.Postgres)
+
 	activitiesStore := pgstore.NewActivitiesPostgres(pgConn)
+	foodStore := pgstore.NewFoodPostgres(pgConn)
+	mealStore := pgstore.NewMealPostgres(pgConn)
 	stravaStore := pgstore.NewStravaPostgres(pgConn)
 	userStore := pgstore.NewUserPostgres(pgConn)
-	// foodStore := pgstore.NewFoodPostgres(pgConn)
 
 	// clients
 	strava := strava.NewStrava(cfg.Strava.ClientID, cfg.Strava.ClientSecret)
@@ -35,7 +38,7 @@ func StartServer() {
 	// services
 	authService := auth.NewService(userStore)
 	activitiesService := activities.NewService(activitiesStore, strava, stravaStore)
-	// foodService := food.NewFoodService(foodStore)
+	foodService := food.NewFoodService(foodStore, mealStore)
 
 	// Routing
 	echo.NotFoundHandler = func(c echo.Context) error {
@@ -57,10 +60,9 @@ func StartServer() {
 
 	// controllers
 	authController := handler.NewAuthController(authService, cfg.JwtSecret)
-	// homeCocntroller := handler.NewHomeController(cfg.Strava.OAuthLink)
 	activitiesController := handler.NewActivitiesController(activitiesService)
-	// foodController := handler.NewFoodController(foodService, validator)
-	// stravaController := handler.NewStravaController(sessionStore, activitiesService)
+	foodController := handler.NewFoodController(foodService)
+	mealController := handler.NewMealController(foodService)
 
 	// handlers
 	e.POST("/register", authController.Register)
@@ -93,32 +95,6 @@ func StartServer() {
 			return &handler.JwtClaims{}
 		},
 	}))
-	// authorized.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-	// 	return func(c echo.Context) error {
-	// 		fmt.Printf("USER %+v", c.Get("user"))
-	// 		token, ok := c.Get("user").(*jwt.Token)
-	// 		if ok {
-	// 			fmt.Println("FAILED")
-	// 			return errors.New("failed to cast Token user from echo context")
-	// 		}
-	// 		fmt.Println("token", token)
-	// 		claims, ok := token.Claims.(handler.JwtClaims)
-	// 		if ok {
-	// 			return errors.New("failed to cast Token to JwtClaims")
-	// 		}
-
-	// 		user := domain.User{
-	// 			Email: claims.Email,
-	// 			Id:    claims.Id,
-	// 			Name:  claims.Name,
-	// 			Role:  claims.Role,
-	// 		}
-
-	// 		c.Set("u", user)
-
-	// 		return nil
-	// 	}
-	// })
 
 	// // Activities
 	authorized.GET("/activities", activitiesController.GetActivities)
@@ -126,10 +102,14 @@ func StartServer() {
 	// // Diary
 	// authorized.GET("/diary", handler.Make(activitiesController.GetActivitiesPage))
 
-	// // Food
-	// authorized.GET("/food/search", handler.Make(foodController.Search))
-	// authorized.POST("/food", handler.Make(foodController.CreateFood))
-	// authorized.DELETE("/food/{id}", handler.Make(activitiesController.GetActivitiesPage))
+	// Food
+	authorized.GET("/food/search", foodController.Search)
+	authorized.POST("/food", foodController.CreateFood)
+	authorized.DELETE("/food/:id", foodController.DeleteFood)
+
+	// Meal
+	authorized.GET("/meal", mealController.GetMeals)
+	authorized.POST("/meal", mealController.CreateMeal)
 
 	// Strava
 	authorized.GET("/strava-oauth", activitiesController.OAuthStrava)

@@ -12,8 +12,7 @@ import (
 
 func (pg *StravaPostgres) GetByUserId(ctx context.Context, userId int) (domain.StravaInfo, error) {
 
-	query := sq.StatementBuilder.
-		PlaceholderFormat(sq.Dollar).
+	query := pg.sq.
 		Select("access_token", "refresh_token").
 		From("strava_info").
 		Where(sq.Eq{"user_id": userId})
@@ -24,7 +23,6 @@ func (pg *StravaPostgres) GetByUserId(ctx context.Context, userId int) (domain.S
 	if err == sql.ErrNoRows {
 		return domain.StravaInfo{}, store.ErrNotFound
 	} else if err != nil {
-		fmt.Println("StravaPostgres ", err)
 		return domain.StravaInfo{}, err
 	}
 
@@ -59,8 +57,12 @@ func (pg *StravaPostgres) UpdateUserStravaInfo(ctx context.Context, accessToken 
 
 type StravaPostgres struct {
 	db *sql.DB
+	sq sq.StatementBuilderType
 }
 
 func NewStravaPostgres(db *sql.DB) *StravaPostgres {
-	return &StravaPostgres{db: db}
+	return &StravaPostgres{
+		db: db,
+		sq: sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+	}
 }
