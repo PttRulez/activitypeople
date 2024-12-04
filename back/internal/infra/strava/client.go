@@ -8,28 +8,39 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
-
-	"github.com/pttrulez/activitypeople/internal/domain"
-	"github.com/pttrulez/activitypeople/internal/logger"
 )
 
-func PrintJSON(v any) {
-	indent, err := json.MarshalIndent(v, "", "  ")
+func (api *Client) GetActivity(ctx context.Context, id int) (
+	ActivityResponse, error) {
+	req, _ := http.NewRequest(http.MethodGet, api.baseURl+fmt.Sprintf(
+		"activities/%d", id), nil)
+	req = req.WithContext(ctx)
+	req.Header.Add("Authorization", "Bearer "+api.userAccessToken)
+
+	resp, err := api.httpClient.Do(req)
 	if err != nil {
-		fmt.Println("PrintJSON err:\n", err)
+		return ActivityResponse{}, fmt.Errorf(
+			"GetAthleteActivities httpClient.Do(req): \n%s", err)
 	}
-	fmt.Println(string(indent))
+
+	var activityData ActivityResponse
+	err = json.NewDecoder(resp.Body).Decode(&activityData)
+	if err != nil {
+		return ActivityResponse{}, fmt.Errorf("GetAthleteActivities json.NewDecoder: \n%s", err)
+	}
+
+	return activityData, nil
 }
 
-func (api *Client) GetAthleteActivities(ctx context.Context, after *time.Time) ([]domain.Activity, error) {
+func (api *Client) GetAthleteActivities(ctx context.Context, after *int64) (
+	[]AthleteActivityResponse, error) {
 	req, _ := http.NewRequest(http.MethodGet, api.baseURl+"athlete/activities", nil)
 	req = req.WithContext(ctx)
 	req.Header.Add("Authorization", "Bearer "+api.userAccessToken)
 
 	if after != nil {
 		q := req.URL.Query()
-		q.Add("after", strconv.Itoa(int(after.Unix())))
+		q.Add("after", strconv.FormatInt(*after, 10))
 		req.URL.RawQuery = q.Encode()
 	}
 
@@ -44,14 +55,7 @@ func (api *Client) GetAthleteActivities(ctx context.Context, after *time.Time) (
 		return nil, fmt.Errorf("GetAthleteActivities json.NewDecoder: \n%s", err)
 	}
 
-	var result []domain.Activity
-	for _, activity := range activityData {
-		a := FromStravaToActivity(activity)
-		logger.Debugf("a %+v", a)
-		result = append(result, a)
-	}
-	logger.Debugf("result %+v", result)
-	return result, nil
+	return activityData, nil
 }
 
 func (api *Client) OAuth(userCode string) (*OAuthResponse, error) {
@@ -123,12 +127,11 @@ type Client struct {
 
 func (m *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := m.transport.RoundTrip(req)
-	fmt.Println("RoundTrip first req URL:", req.URL.String())
-	fmt.Println("RoundTrip first response code", resp.StatusCode)
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		fmt.Println("Startting Refresh:")
-		refreshTokenRequest, _ := http.NewRequest(http.MethodPost, "https://www.strava.com/oauth/token", nil)
+		refreshTokenRequest, _ := http.NewRequest(http.MethodPost,
+			"https://www.strava.com/oauth/token", nil)
+
 		params := url.Values{}
 		params.Add("client_id", m.appClientId)
 		params.Add("client_secret", m.appClientSecret)
@@ -138,21 +141,25 @@ func (m *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 
 		resp, err = m.transport.RoundTrip(refreshTokenRequest)
 		if err != nil {
-			return nil, fmt.Errorf("StravaApi RoundTrip refreshTokenRequest err: \n%s", err)
+			return nil, fmt.Errorf("StravaApi RoundTrip refreshTokenRequest err: \n%s",
+				err)
 		}
-		fmt.Println("RoundTrip refreshTokenRequest response code", resp.StatusCode)
+
 		refreshData := &OAuthRefreshTokenResponse{}
 		err = json.NewDecoder(resp.Body).Decode(refreshData)
 		if err != nil {
-			return nil, fmt.Errorf("StravaApi RoundTrip refreshTokenRequest decode err: \n%s", err)
+			return nil, fmt.Errorf("StravaApi RoundTrip refreshTokenRequest decode err: \n%s",
+				err)
 		}
-		fmt.Printf("RoundTrip refreshData %+v\n", refreshData)
 
 		if resp.StatusCode == http.StatusOK {
-
 			// Store tokens
 			err := m.storeTokens(refreshData.AccessToken, refreshData.RefreshToken)
-			fmt.Println("RoundTrip storeTokens err:", err)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"StravaApi RoundTrip refreshTokenRequest storeTokens err: \n%s",
+					err)
+			}
 			m.userAccessToken = refreshData.AccessToken
 			m.userRefreshToken = refreshData.RefreshToken
 
@@ -160,9 +167,13 @@ func (m *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", m.userAccessToken))
 
 			resp, err = m.transport.RoundTrip(req)
-			fmt.Println("RoundTrip second response code", resp.StatusCode)
+			if err != nil {
+				return nil, fmt.Errorf("StravaApi RoundTrip second request err: \n%s",
+					err)
+			}
 		} else {
-			return nil, fmt.Errorf("StravaApi RoundTrip refreshTokenRequest status code: %d", resp.StatusCode)
+			return nil, fmt.Errorf("StravaApi RoundTrip refreshTokenRequest status code: %d",
+				resp.StatusCode)
 		}
 	}
 

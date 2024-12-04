@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 create table if not exists foods (
   carbs INT NOT NULL,
-  calories INT NOT NULL,
+  calories_per_100 INT NOT NULL,
   created_by_admin BOOL NOT NULL,
   fat INT NOT NULL,
 	id SERIAL PRIMARY KEY,

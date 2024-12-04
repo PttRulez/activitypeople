@@ -43,11 +43,10 @@ func (pg *MealPostgres) Insert(ctx context.Context, m domain.Meal) error {
 	}
 	row.Close()
 
-	q = pg.sq.Insert("foods_on_meals").Columns("calories", "meal_id", "name", "food_id",
-		"weight")
+	q = pg.sq.Insert("foods_on_meals").Columns("calories", "calories_per_100", "meal_id", "name", "weight")
 
 	for _, f := range m.Foods {
-		q = q.Values(f.Calories, mealId, f.Name, f.Id, f.Weight)
+		q = q.Values(&f.Calories, &f.CaloriesPer100, mealId, &f.Name, &f.Weight)
 	}
 
 	_, err = q.RunWith(tx).ExecContext(ctx)
@@ -81,7 +80,7 @@ func (pg *MealPostgres) Get(ctx context.Context, f domain.MealFilters, userID in
 		Where(sq.GtOrEq{"date": f.From}).
 		Where(sq.LtOrEq{"date": f.Until}).
 		OrderBy("date DESC")
-	fmt.Println(f.From, f.Until)
+
 	rows, err := q.RunWith(tx).QueryContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -105,7 +104,7 @@ func (pg *MealPostgres) Get(ctx context.Context, f domain.MealFilters, userID in
 		mealIDs[i] = m.Id
 	}
 
-	q = pg.sq.Select("calories", "meal_id", "name", "weight").
+	q = pg.sq.Select("calories", "calories_per_100", "meal_id", "name", "weight").
 		From("foods_on_meals").
 		Where("meal_id = any(?)", pq.Array(mealIDs))
 
@@ -118,7 +117,7 @@ func (pg *MealPostgres) Get(ctx context.Context, f domain.MealFilters, userID in
 	foods := make([]domain.FoodInMeal, 0)
 	for rows.Next() {
 		var f domain.FoodInMeal
-		err := rows.Scan(&f.Calories, &f.MealId, &f.Name, &f.Weight)
+		err := rows.Scan(&f.Calories, &f.CaloriesPer100, &f.MealId, &f.Name, &f.Weight)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
@@ -131,7 +130,6 @@ func (pg *MealPostgres) Get(ctx context.Context, f domain.MealFilters, userID in
 		foodMap[f.MealId] = append(foodMap[f.MealId], f)
 	}
 
-	fmt.Printf("foodMap: %+v", foodMap)
 	for i, m := range meals {
 		meals[i].Foods = foodMap[m.Id]
 	}

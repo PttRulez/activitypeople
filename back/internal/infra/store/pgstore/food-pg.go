@@ -26,9 +26,10 @@ func (pg *FoodPostgres) Delete(ctx context.Context, foodID int, userID int) erro
 
 func (pg *FoodPostgres) Insert(ctx context.Context, f domain.Food) error {
 	const op = "FoodPostgres.Insert"
+
 	q := pg.sq.Insert("foods").
-		Columns("calories", "carbs", "created_by_admin", "fat", "name", "protein", "user_id").
-		Values(f.Calories, f.Carbs, f.CreatedByAdmin, f.Fat, f.Name, f.Protein, f.UserID)
+		Columns("calories_per_100", "carbs", "created_by_admin", "fat", "name", "protein", "user_id").
+		Values(f.CaloriesPer100, f.Carbs, f.CreatedByAdmin, f.Fat, f.Name, f.Protein, f.UserID)
 
 	_, err := q.RunWith(pg.db).ExecContext(ctx)
 	if err != nil {
@@ -41,7 +42,7 @@ func (pg *FoodPostgres) Insert(ctx context.Context, f domain.Food) error {
 func (pg *FoodPostgres) Search(ctx context.Context, q string) ([]domain.Food, error) {
 	const op = "FoodPostgres.Search"
 
-	query := pg.sq.Select("id", "carbs", "calories", "fat", "name", "created_by_admin",
+	query := pg.sq.Select("id", "carbs", "calories_per_100", "fat", "name", "created_by_admin",
 		"protein", "user_id").
 		From("foods").
 		Where(sq.ILike{"name": fmt.Sprintf("%%%v%%", q)})
@@ -51,11 +52,11 @@ func (pg *FoodPostgres) Search(ctx context.Context, q string) ([]domain.Food, er
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer rows.Close()
-	fmt.Println(query.ToSql())
+
 	foods := make([]domain.Food, 0)
 	for rows.Next() {
 		var f domain.Food
-		err := rows.Scan(&f.ID, &f.Carbs, &f.Calories, &f.Fat, &f.Name, &f.CreatedByAdmin,
+		err := rows.Scan(&f.ID, &f.Carbs, &f.CaloriesPer100, &f.Fat, &f.Name, &f.CreatedByAdmin,
 			&f.Protein, &f.UserID)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)

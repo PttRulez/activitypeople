@@ -1,6 +1,6 @@
 export type FoodResponse = {
   name: string;
-  calories: number;
+  caloriesPer100: number;
   carbs: number;
   fat: number;
   id: number;

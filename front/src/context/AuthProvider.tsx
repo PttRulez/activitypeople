@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import { userKey } from "..";
-import { Role } from "@/types/enums";
+import { Role } from "src/types/enums";
 
 export type UserInfo = {
   accessToken?: string;
@@ -25,9 +25,8 @@ export const emptyUser: UserInfo = {
   },
 } as UserInfo;
 
-export const AuthProvider = ({ children }: { children: JSX.Element }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const localItem = localStorage.getItem(userKey);
-  console.log("localItem", localItem);
   let user = emptyUser;
   if (localItem) {
     user = JSON.parse(localItem);

@@ -27,8 +27,11 @@ func (s *Service) Login(ctx context.Context, email, password string) (domain.Use
 
 func (s *Service) Register(ctx context.Context, email, password, name string) (
 	domain.User, error) {
-	_, err := s.userRepo.GetByEmail(ctx, email)
-	if !errors.Is(err, store.ErrNotFound) {
+	u, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return domain.User{}, err
+	}
+	if u.Id != 0 {
 		return domain.User{}, service.ErrAlreadyExists
 	}
 
@@ -37,7 +40,7 @@ func (s *Service) Register(ctx context.Context, email, password, name string) (
 		return domain.User{}, err
 	}
 
-	u, err := s.userRepo.Insert(ctx, email, string(encpw), name)
+	u, err = s.userRepo.Insert(ctx, email, string(encpw), name)
 	if err != nil {
 		return domain.User{}, err
 	}

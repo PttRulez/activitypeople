@@ -19,6 +19,11 @@ func (s *FoodService) CreateMeal(ctx context.Context, f domain.Meal) error {
 	return s.mealRepo.Insert(ctx, f)
 }
 
+func (s *FoodService) CreateWeight(ctx context.Context, w domain.Weight,
+	userID int) error {
+	return s.weightRepo.Insert(ctx, w, userID)
+}
+
 func (s *FoodService) GetMeals(ctx context.Context, f domain.MealFilters, userId int) (
 	[]domain.Meal, error) {
 	return s.mealRepo.Get(ctx, f, userId)
@@ -28,16 +33,24 @@ func (s *FoodService) Search(ctx context.Context, q string) ([]domain.Food, erro
 	return s.foodRepo.Search(ctx, q)
 }
 
-func NewFoodService(foodRepo FoodRepository, mealRepo MealRepository) *FoodService {
+func NewFoodService(foodRepo FoodRepository, mealRepo MealRepository, weightRepo WeightRepository) *FoodService {
 	return &FoodService{
-		foodRepo: foodRepo,
-		mealRepo: mealRepo,
+		foodRepo:   foodRepo,
+		mealRepo:   mealRepo,
+		weightRepo: weightRepo,
 	}
 }
 
 type FoodService struct {
-	foodRepo FoodRepository
-	mealRepo MealRepository
+	foodRepo   FoodRepository
+	mealRepo   MealRepository
+	weightRepo WeightRepository
+}
+
+type FoodRepository interface {
+	Insert(ctx context.Context, f domain.Food) error
+	Delete(ctx context.Context, foodID int, userID int) error
+	Search(ctx context.Context, q string) ([]domain.Food, error)
 }
 
 type MealRepository interface {
@@ -45,8 +58,6 @@ type MealRepository interface {
 	Get(ctx context.Context, f domain.MealFilters, userID int) ([]domain.Meal, error)
 }
 
-type FoodRepository interface {
-	Insert(ctx context.Context, f domain.Food) error
-	Delete(ctx context.Context, foodID int, userID int) error
-	Search(ctx context.Context, q string) ([]domain.Food, error)
+type WeightRepository interface {
+	Insert(ctx context.Context, w domain.Weight, userID int) error
 }

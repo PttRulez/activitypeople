@@ -1,7 +1,7 @@
-import Autocomplete from "@/components/Autocomplete";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import useDebounce from "@/hooks/useDebounce";
-import { FoodResponse } from "@/types/food";
+import Autocomplete from "src/components/Autocomplete";
+import useAxiosPrivate from "src/hooks/useAxiosPrivate";
+import useDebounce from "src/hooks/useDebounce";
+import { FoodResponse } from "src/types/food";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -49,6 +49,7 @@ const FoodSearch = (props: Props) => {
       }}
       onChoose={onChoose}
       onChange={(e: any) => {
+        if (inputProps.onChange) inputProps.onChange(e);
         setFoodQuery(e.target.value);
       }}
     />

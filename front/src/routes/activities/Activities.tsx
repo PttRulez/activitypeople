@@ -1,12 +1,12 @@
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { ActivityResponse } from "@/types/activity";
-import { monthNameMap } from "@/types/enums";
-import { getDay } from "@/utils/utils";
+import useAxiosPrivate from "src/hooks/useAxiosPrivate";
+import { ActivityResponse } from "src/types/activity";
+import { monthNameMap } from "src/types/enums";
+import { getDay } from "src/utils/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import ActivityCard from "./ActivityCard";
+import ActivityDayCard from "./ActivityDayCard";
 
 type ActivitiesState = {
   monthName: string;
@@ -16,7 +16,10 @@ type ActivitiesState = {
   year: number;
 };
 
-type Day = ActivityResponse | null;
+export type ActivityDay = {
+  activities: ActivityResponse[];
+  date: Date;
+} | null;
 
 const Activities = () => {
   const queryClient = useQueryClient();
@@ -57,7 +60,7 @@ const Activities = () => {
 
   const axios = useAxiosPrivate();
 
-  const query = useQuery({
+  const { data: activitiesResponse } = useQuery({
     queryKey: ["activities", year, month],
     queryFn: async () => {
       let params: any = {};
@@ -81,30 +84,27 @@ const Activities = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
-      console.log("Synced with Strava!");
     },
   });
 
-  const days: Day[] = useMemo(() => {
-    if (!query.data) return [];
+  const days: ActivityDay[] = useMemo(() => {
+    if (!activitiesResponse) return [];
 
     const date = dayjs(`${calendar.year}-${calendar.monthNumber}-01`);
     const daysBeforeFirst = getDay(date) - 1;
     const daysAfterLast = 7 - getDay(date.endOf("month"));
     const totalDays = daysBeforeFirst + daysAfterLast + date.daysInMonth();
-    console.log(totalDays);
     const days = new Array(totalDays).fill(null);
-    console.log("daysBeforeFirst", daysBeforeFirst);
-    for (const a of query.data.data) {
+    for (const a of activitiesResponse.data) {
       days[dayjs(a.date).date() - 1 + daysBeforeFirst] = a;
     }
 
     return days;
-  }, [query.data, calendar]);
+  }, [activitiesResponse, calendar]);
 
   return (
     calendar && (
-      <>
+      <div>
         <div className='p-4 text-3xl flex justify-between'>
           <div className='min-w-56 flex justify-between'>
             <Link to={calendar.prevButtonLink}>
@@ -133,11 +133,11 @@ const Activities = () => {
           </div>
         </div>
         <div className='grid grid-cols-7 gap-4'>
-          {days.map((a) => (
-            <ActivityCard a={a} />
+          {days.map((d, i) => (
+            <ActivityDayCard key={"activitycard" + i} day={d} />
           ))}
         </div>
-      </>
+      </div>
     )
   );
 };

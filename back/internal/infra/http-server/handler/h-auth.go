@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,6 +12,7 @@ import (
 )
 
 type JwtClaims struct {
+	BMR   int
 	Id    int
 	Name  string
 	Email string
@@ -36,6 +37,7 @@ func (c *AuthController) Login(e echo.Context) error {
 	}
 
 	claims := &JwtClaims{
+		BMR:   user.BMR,
 		Id:    user.Id,
 		Name:  user.Name,
 		Email: user.Email,
@@ -44,7 +46,7 @@ func (c *AuthController) Login(e echo.Context) error {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)),
 		},
 	}
-
+	fmt.Println("CLIAM",  claims)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	accessToken, err := token.SignedString([]byte(c.jwtSecret))
 	if err != nil {
@@ -105,21 +107,16 @@ func (c *AuthController) Register(e echo.Context) error {
 		return err
 	}
 
-	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{})
-	refreshToken, err := token.SignedString([]byte("moysecret"))
-	if err != nil {
-		return err
-	}
+	// token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{})
+	// refreshToken, err := token.SignedString([]byte("moysecret"))
+	// if err != nil {
+	// 	return err
+	// }
 
 	return e.JSON(http.StatusOK, echo.Map{
-		"accessToken":  accessToken,
-		"refreshToken": refreshToken,
+		"accessToken": accessToken,
+		"user":        user.JSON(),
 	})
-}
-
-type AuthService interface {
-	Login(ctx context.Context, email, password string) (domain.User, error)
-	Register(ctx context.Context, email, password, name string) (domain.User, error)
 }
 
 type AuthController struct {

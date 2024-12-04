@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type Food struct {
-	Calories       int
+	CaloriesPer100 int
 	Carbs          int
 	CreatedByAdmin bool
 	Fat            int
@@ -14,11 +14,11 @@ type Food struct {
 }
 
 type FoodInMeal struct {
-	Calories int
-	Name     string
-	Id       int
-	Weight   int
-	MealId   int
+	Calories       int
+	CaloriesPer100 int
+	Name           string
+	Weight         int
+	MealId         int
 }
 
 type Meal struct {

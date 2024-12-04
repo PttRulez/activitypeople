@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const CreateFoodSchema = z.object({
   name: z.string(),
-  calories: z.number({
+  caloriesPer100: z.number({
     message: "Введите калорийность",
   }),
   carbs: z.number({

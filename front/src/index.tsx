@@ -19,7 +19,7 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <RouterProvider future={{ v7_startTransition: true }} router={router} />
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>

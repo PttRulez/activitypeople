@@ -9,16 +9,16 @@ func FromMealReqToMeal(req contracts.CreateMealRequest) domain.Meal {
 	foods := make([]domain.FoodInMeal, len(req.Foods))
 	for i, f := range req.Foods {
 		foods[i] = domain.FoodInMeal{
-			Id:       f.Id,
-			Name:     f.Name,
-			Weight:   f.Weight,
-			Calories: f.Calories,
+			Calories:       *f.Calories,
+			CaloriesPer100: *f.CaloriesPer100,
+			Name:           f.Name,
+			Weight:         *f.Weight,
 		}
 	}
 
 	return domain.Meal{
-		Date:     req.Date.Time,
-		Calories: req.Calories,
+		Calories: *req.Calories,
+		Date:     req.Date,
 		Name:     req.Name,
 		Foods:    foods,
 	}

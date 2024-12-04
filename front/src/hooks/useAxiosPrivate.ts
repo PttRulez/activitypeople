@@ -1,7 +1,7 @@
-import { axiosPrivate } from "@/api/activitypeople";
+import { axiosPrivate } from "src/api/activitypeople";
 import { useEffect } from "react";
 import useAuth from "./useAuth";
-import { emptyUser } from "@/context/AuthProvider";
+import { emptyUser } from "src/context/AuthProvider";
 
 const useAxiosPrivate = () => {
   const { auth, setAuth } = useAuth();

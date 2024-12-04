@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -71,18 +70,38 @@ func (c *FoodController) Search(e echo.Context) error {
 	return e.JSON(http.StatusOK, res)
 }
 
-func NewFoodController(foodService FoodService) *FoodController {
+func (c *FoodController) CreateWeight(e echo.Context) error {
+	user := e.Get("u").(domain.User)
+
+	var req contracts.CreateWeightRequest
+	err := e.Bind(&req)
+	if err != nil {
+		return err
+	}
+	err = ValidateStruct(req)
+	if err != nil {
+		return err
+	}
+
+	weight := converter.FromWeightReqToWeight(req)
+
+	err = c.foodService.CreateWeight(e.Request().Context(), weight, user.Id)
+	if err != nil {
+		return err
+	}
+
+	return e.String(http.StatusCreated, "Weight created successfully")
+}
+
+func NewFoodController(activitiesService AcitivitiesService, foodService FoodService) *FoodController {
 	return &FoodController{
-		foodService: foodService,
+		activitiesService: activitiesService,
+		foodService:       foodService,
 	}
 }
 
 type FoodController struct {
-	foodService FoodService
-}
-
-type FoodService interface {
-	CreateFood(ctx context.Context, f domain.Food, userID int) error
-	DeleteFood(ctx context.Context, foodID int, userID int) error
-	Search(ctx context.Context, q string) ([]domain.Food, error)
+	activitiesService AcitivitiesService
+	foodService       FoodService
+	mealService       MealService
 }

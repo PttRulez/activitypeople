@@ -1,4 +1,4 @@
-import useAuth from "@/hooks/useAuth";
+import useAuth from "src/hooks/useAuth";
 import { Link, Navigate } from "react-router-dom";
 
 let user = {
@@ -27,7 +27,7 @@ const Home = () => {
   ) : (
     <div className='text-center'>
       {!auth.user.stravaLinked ? (
-        <>
+        <div>
           <h1 className='text-2xl mt-10 mb-10'>
             Здарова, атлет. Чтобы посмотреть свои активности, необходимо
             законнектить сраву
@@ -36,9 +36,9 @@ const Home = () => {
           <a href={stravaOAuthLink} className='btn btn-primary'>
             Привяжите свой аккаунт Strava
           </a>
-        </>
+        </div>
       ) : (
-        <Navigate to='/activities' />
+        <Navigate to='/diaries' />
       )}
     </div>
   );

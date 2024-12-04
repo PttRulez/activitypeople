@@ -3,17 +3,17 @@ package contracts
 import "time"
 
 type CreateMealRequest struct {
-	Calories int          `json:"calories" validate:"required,number"`
-	Date     OnlyDate     `json:"date"`
+	Calories *int         `json:"calories" validate:"required,number"`
+	Date     time.Time    `json:"date" validate:"required"`
 	Name     string       `json:"name" validate:"required"`
-	Foods    []FoodInMeal `json:"foods" validate:"required"`
+	Foods    []FoodInMeal `json:"foods" validate:"required,dive"`
 }
 
 type FoodInMeal struct {
-	Calories int    `json:"calories" validate:"required"`
-	Id       int    `json:"id"  validate:"required"`
-	Name     string `json:"name" validate:"required"`
-	Weight   int    `json:"weight"  validate:"required"`
+	Calories       *int   `json:"calories" validate:"required"`
+	CaloriesPer100 *int   `json:"caloriesPer100" validate:"required"`
+	Name           string `json:"name" validate:"required"`
+	Weight         *int   `json:"weight"  validate:"required"`
 }
 
 type FoodInMealResponse struct {

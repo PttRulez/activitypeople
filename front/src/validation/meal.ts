@@ -3,7 +3,6 @@ import { z } from "zod";
 const FoodInMealSchema = z.object({
   calories: z.number(),
   caloriesPer100: z.number(),
-  id: z.number(),
   name: z.string(),
   weight: z.number(),
 });

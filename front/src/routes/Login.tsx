@@ -1,7 +1,7 @@
-import axios from "@/api/activitypeople";
-import { UserInfo } from "@/context/AuthProvider";
-import useAuth from "@/hooks/useAuth";
-import { LoginData } from "@/validation/auth";
+import axios from "src/api/activitypeople";
+import { UserInfo } from "src/context/AuthProvider";
+import useAuth from "src/hooks/useAuth";
+import { LoginData } from "src/validation/auth";
 import { AxiosResponse } from "axios";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";

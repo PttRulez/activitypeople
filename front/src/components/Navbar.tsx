@@ -1,5 +1,5 @@
-import { emptyUser } from "@/context/AuthProvider";
-import useAuth from "@/hooks/useAuth";
+import { emptyUser } from "src/context/AuthProvider";
+import useAuth from "src/hooks/useAuth";
 import { Link } from "react-router-dom";
 
 const NavBar = () => {
@@ -14,7 +14,8 @@ const NavBar = () => {
         <Link to='/' id='#logo' className='text-primary text-4xl font-bold'>
           <i className='fa-solid fa-medal'></i>
         </Link>
-        <nav className='text-primary text-xl font-bold'>
+        <nav className='text-primary text-xl font-bold flex gap-3'>
+          <Link to='/activities'>Activities</Link>
           <Link to='/foods'>Food</Link>
         </nav>
       </div>

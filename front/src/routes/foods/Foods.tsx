@@ -1,6 +1,6 @@
-import Modal from "@/components/Modal";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
-import { MealResponse } from "@/types/food";
+import Modal from "src/components/Modal";
+import useAxiosPrivate from "src/hooks/useAxiosPrivate";
+import { MealResponse } from "src/types/food";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import React, { useMemo } from "react";
@@ -21,9 +21,9 @@ const Foods = () => {
   });
 
   const days = useMemo<Day[]>(() => {
-    if (!meals) return [];
+    if (!meals || meals.length === 0) return [];
 
-    let sorterMeals = meals.sort((a, b) => (a.date < b.date ? -1 : 1));
+    let sorterMeals = meals.sort((a, b) => (a.date > b.date ? -1 : 1));
     let curDate = sorterMeals[0].date;
     let curIndex = 0;
     let days: Day[] = [{ date: curDate, meals: [] }];
@@ -81,7 +81,7 @@ const Foods = () => {
             <div className='divider'></div>
 
             {d.meals.map((m) => (
-              <div className='collapse bg-base-200' key={m.id + m.name}>
+              <div className='collapse bg-base-200 mb-4' key={m.id + m.name}>
                 <input type='checkbox' />
                 <div className='collapse-title  font-medium'>
                   {`${m.name} - ${m.calories}`}

@@ -3,11 +3,12 @@ package domain
 type Role string
 
 const (
-	Admin Role = "ADMIN"
-	Scoof Role = "SCOOF"
+	Admin       Role = "ADMIN"
+	RegularUser Role = "REGULAR"
 )
 
 type User struct {
+	BMR            int
 	Email          string
 	Id             int
 	HashedPassword string
@@ -29,6 +30,7 @@ func (u *User) JSON() UserInfo {
 	}
 
 	return UserInfo{
+		BMR:          u.BMR,
 		Email:        u.Email,
 		Name:         u.Name,
 		Role:         u.Role,
@@ -37,6 +39,7 @@ func (u *User) JSON() UserInfo {
 }
 
 type UserInfo struct {
+	BMR          int    `json:"bmr"`
 	Email        string `json:"email"`
 	Name         string `json:"name"`
 	Role         Role   `json:"role"`

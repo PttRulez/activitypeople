@@ -15,10 +15,12 @@ type OAuthRefreshTokenResponse struct {
 	TokenType    string `json:"token_type"`
 }
 
+type ActivityResponse struct {
+	Calories float64 `json:"calories"`
+}
+
 type AthleteActivityResponse struct {
 	AverageHeartrate float64 `json:"average_heartrate"`
-
-	Calories float64 `json:"calories"`
 
 	// The activity's distance, in meters
 	Distance float64 `json:"distance"`

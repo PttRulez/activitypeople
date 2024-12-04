@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -20,6 +18,7 @@ func (c *MealController) CreateMeal(e echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	err = ValidateStruct(req)
 	if err != nil {
 		return err
@@ -33,7 +32,6 @@ func (c *MealController) CreateMeal(e echo.Context) error {
 
 func (c *MealController) GetMeals(e echo.Context) error {
 	user := e.Get("u").(domain.User)
-	fmt.Println("user", user)
 
 	from := e.QueryParam("from")
 	until := e.QueryParam("until")
@@ -79,11 +77,6 @@ func NewMealController(mealService MealService) *MealController {
 	return &MealController{
 		mealService: mealService,
 	}
-}
-
-type MealService interface {
-	CreateMeal(ctx context.Context, f domain.Meal) error
-	GetMeals(ctx context.Context, f domain.MealFilters, userId int) ([]domain.Meal, error)
 }
 
 type MealController struct {

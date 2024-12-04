@@ -1,5 +1,5 @@
-import useAuth from "@/hooks/useAuth";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import useAuth from "src/hooks/useAuth";
+import useAxiosPrivate from "src/hooks/useAxiosPrivate";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 

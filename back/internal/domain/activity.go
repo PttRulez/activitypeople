@@ -26,8 +26,9 @@ type Activity struct {
 	Source     ActivitySource
 
 	// айдишник активити у поставщика (гармин, страва и т.д.)
-	SourceId  int64
-	SportType SportType
+	SourceId      int64
+	SportType     SportType
+	StartTimeUnix int64
 
 	// время в секундах
 	TotalTime int

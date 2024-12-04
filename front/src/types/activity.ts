@@ -1,5 +1,5 @@
 export type ActivityResponse = {
-  calories: string;
+  calories: number;
   description: string;
   distance: number;
   date: string;
@@ -10,6 +10,7 @@ export type ActivityResponse = {
   pace: number;
   paceString: string;
   source: ActivitySource;
+  sourceId: number;
   sportType: SportType;
   totalTime: number;
 };

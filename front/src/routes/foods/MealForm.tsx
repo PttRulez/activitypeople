@@ -2,14 +2,14 @@ import {
   CreateMealData,
   CreateMealSchema,
   FoodInMealData,
-} from "@/validation/meal";
+} from "src/validation/meal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { useEffect } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import FoodSearch from "./FoodSearch";
-import { useMutation } from "@tanstack/react-query";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useAxiosPrivate from "src/hooks/useAxiosPrivate";
 
 type Props = {
   onSuccess: Function;
@@ -17,12 +17,12 @@ type Props = {
 const emptyFood: FoodInMealData = {
   calories: 0,
   caloriesPer100: 0,
-  id: 0,
   name: "",
   weight: 0,
 };
 
 const MealForm = (p: Props) => {
+  const queryClient = useQueryClient();
   const {
     control,
     formState: { errors },
@@ -34,7 +34,7 @@ const MealForm = (p: Props) => {
   } = useForm<CreateMealData>({
     defaultValues: {
       calories: 0,
-      date: dayjs().format("YYYY-MM-DD"),
+      date: dayjs().toISOString(),
       foods: [emptyFood],
       name: "Обед",
     },
@@ -59,6 +59,7 @@ const MealForm = (p: Props) => {
     onSuccess: (data: any) => {
       reset();
       p.onSuccess();
+      queryClient.invalidateQueries({ queryKey: ["meals"] });
     },
     onError: (error: any) => {
       console.error("onError", error);
@@ -66,19 +67,19 @@ const MealForm = (p: Props) => {
   });
 
   const onSubmit = (data: CreateMealData) => {
+    console.log("onSubmit", data);
     createMeal.mutate(data);
   };
 
-  const watchedWeight = useWatch({
+  const watchedFoods = useWatch({
     control,
     name: "foods",
   });
-  // const watchedWeight = watch("foods")?.map((item) => item?.weight);
 
   useEffect(() => {
-    const c = watchedWeight.reduce((acc, curr) => acc + curr.calories, 0);
+    const c = watchedFoods.reduce((acc, curr) => acc + curr.calories, 0);
     setValue("calories", c);
-  }, [watchedWeight]);
+  }, [watchedFoods]);
 
   return (
     <form id='mealForm' onSubmit={handleSubmit(onSubmit)} className='pt-3'>
@@ -100,27 +101,44 @@ const MealForm = (p: Props) => {
         <div>{watch("calories")} калорий</div>
       </section>
       <section>
-        <input
-          type='date'
-          className='input input-bordered w-full'
-          autoComplete='off'
-          {...register("date")}
+        <Controller
+          control={control}
+          name='date'
+          render={({ field }) => (
+            <input
+              type='date'
+              className='input input-bordered w-full'
+              autoComplete='off'
+              onChange={(e) => {
+                setValue("date", dayjs(new Date(e.target.value)).toISOString());
+              }}
+              value={dayjs(new Date(watch("date"))).format("YYYY-MM-DD")}
+            />
+          )}
         />
       </section>
-      <div className='label'>
+      <div className='label grid grid-cols-[3fr_1fr_1fr_1fr] gap-2 text-xs text-center'>
         <span className='label-text'>Что ели?</span>
+        <span className='label-text'>вес</span>
+        <span className='label-text'>ккал/100</span>
+        <span className='label-text'>ккал</span>
       </div>
-      <div className='grid grid-cols-[4fr_1fr_1fr] gap-2'>
+      <div>
         {foodFields.map((field, index) => (
-          <>
+          <div className='grid grid-cols-[3fr_1fr_1fr_1fr] gap-2 mb-2'>
             <FoodSearch
               key={field.name + index}
-              inputProps={{ ...register(`foods.${index}.name`) }}
+              inputProps={{
+                ...register(`foods.${index}.name`),
+                value: watch(`foods.${index}.name`),
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                  setValue(`foods.${index}.name`, e.target.value);
+                },
+              }}
               onChoose={(f) => {
                 update(index, {
                   calories: 0,
-                  caloriesPer100: f.calories,
-                  id: f.id,
+                  caloriesPer100: f.caloriesPer100,
                   name: f.name,
                   weight: 0,
                 });
@@ -134,7 +152,8 @@ const MealForm = (p: Props) => {
               onChange={(e) => {
                 setValue(`foods.${index}.weight`, Number(e.target.value));
                 const c = Math.floor(
-                  (Number(e.target.value) / 100) * field.caloriesPer100
+                  (Number(e.target.value) / 100) *
+                    watch(`foods.${index}.caloriesPer100`)
                 );
                 setValue(`foods.${index}.calories`, c);
               }}
@@ -142,10 +161,29 @@ const MealForm = (p: Props) => {
             <input
               type='number'
               className='input input-bordered w-full'
+              {...register(`foods.${index}.caloriesPer100`, {
+                valueAsNumber: true,
+              })}
+              onChange={(e) => {
+                setValue(
+                  `foods.${index}.caloriesPer100`,
+                  Number(e.target.value)
+                );
+                const c = Math.floor(
+                  (watch(`foods.${index}.weight`) / 100) *
+                    Number(e.target.value)
+                );
+                setValue(`foods.${index}.calories`, c);
+              }}
+              value={watch(`foods.${index}.caloriesPer100`)}
+            />
+            <input
+              type='number'
+              className='input input-bordered w-full'
               value={watch(`foods.${index}.calories`)}
               disabled
             />
-          </>
+          </div>
         ))}
       </div>
       <div className='flex justify-between gap-3 pt-5'>

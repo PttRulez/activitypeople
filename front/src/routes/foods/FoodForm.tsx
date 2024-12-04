@@ -1,8 +1,8 @@
-import { CreateFoodData, CreateFoodSchema } from "@/validation/food";
+import { CreateFoodData, CreateFoodSchema } from "src/validation/food";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import useAxiosPrivate from "@/hooks/useAxiosPrivate";
+import useAxiosPrivate from "src/hooks/useAxiosPrivate";
 
 type Props = {
   onSuccess: Function;
@@ -65,13 +65,13 @@ const FoodForm = (p: Props) => {
             <input
               type='number'
               className='input input-bordered w-full'
-              {...register("calories", {
+              {...register("caloriesPer100", {
                 valueAsNumber: true,
               })}
             />
             <div className='label'>
               <span className='label-text-alt text-error'>
-                {errors.calories?.message}
+                {errors.caloriesPer100?.message}
               </span>
             </div>
           </div>

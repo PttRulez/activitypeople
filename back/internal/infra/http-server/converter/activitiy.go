@@ -19,6 +19,7 @@ func FromActivityToActivityResponse(a domain.Activity,
 		Pace:        a.Pace,
 		PaceString:  a.PaceString,
 		Source:      a.Source,
+		SourceId:    a.SourceId,
 		SportType:   a.SportType,
 		TotalTime:   a.TotalTime,
 	}
