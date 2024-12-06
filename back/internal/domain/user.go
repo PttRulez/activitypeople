@@ -20,7 +20,7 @@ type User struct {
 
 type UserSettings struct {
 	BMR                 int
-	CaloriesPer100Steps int
+	CaloriesPer100Steps float64
 }
 
 type StravaInfo struct {
@@ -45,10 +45,10 @@ func (u *User) JSON() UserInfo {
 }
 
 type UserInfo struct {
-	CaloriesPer100Steps int    `json:"caloriesPer100Steps"`
-	BMR                 int    `json:"bmr"`
-	Email               string `json:"email"`
-	Name                string `json:"name"`
-	Role                Role   `json:"role"`
-	StravaLinked        bool   `json:"stravaLinked"`
+	CaloriesPer100Steps float64 `json:"caloriesPer100Steps"`
+	BMR                 int     `json:"bmr"`
+	Email               string  `json:"email"`
+	Name                string  `json:"name"`
+	Role                Role    `json:"role"`
+	StravaLinked        bool    `json:"stravaLinked"`
 }

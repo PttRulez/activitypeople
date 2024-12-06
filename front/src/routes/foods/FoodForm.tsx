@@ -78,18 +78,19 @@ const FoodForm = (p: Props) => {
 
           <div>
             <div className='label'>
-              <span className='label-text'>Углеводов на 100 г</span>
+              <span className='label-text'>Белки на 100 г</span>
             </div>
             <input
               type='number'
+              step='.1'
               className='input input-bordered w-full'
-              {...register("carbs", {
+              {...register("protein", {
                 valueAsNumber: true,
               })}
             />
             <div className='label'>
               <span className='label-text-alt text-error'>
-                {errors.carbs?.message}
+                {errors.protein?.message}
               </span>
             </div>
           </div>
@@ -116,19 +117,18 @@ const FoodForm = (p: Props) => {
 
           <div>
             <div className='label'>
-              <span className='label-text'>Белки на 100 г</span>
+              <span className='label-text'>Углеводов на 100 г</span>
             </div>
             <input
               type='number'
-              step='.1'
               className='input input-bordered w-full'
-              {...register("protein", {
+              {...register("carbs", {
                 valueAsNumber: true,
               })}
             />
             <div className='label'>
               <span className='label-text-alt text-error'>
-                {errors.protein?.message}
+                {errors.carbs?.message}
               </span>
             </div>
           </div>

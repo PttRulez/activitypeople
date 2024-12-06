@@ -45,7 +45,8 @@ const Autocomplete = <D extends object>(props: Props<D>) => {
       />
 
       {items.length > 0 && open && (
-        <div className='dropdown-content bg-base-200 top-14 max-h-96 overflow-auto flex-col rounded-md z-10'>
+        <div className='dropdown-content bg-base-200 top-14 max-h-96 overflow-auto
+          flex-col rounded-md z-10'>
           <ul
             className='menu menu-compact '
             style={{ width: ref.current?.clientWidth }}

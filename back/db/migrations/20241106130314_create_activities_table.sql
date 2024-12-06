@@ -15,7 +15,7 @@ create table if not exists activities (
   source_id BIGINT NOT NULL,
 	sport_type VARCHAR(255) NOT NULL,
   start_time_unix BIGINT NOT NULL,
-  total_time INT NOT NULL,
+  ccod INT NOT NULL,
 	user_id INT NOT NULL REFERENCES users(id) ON DELETE cascade 
 );
 -- +goose StatementEnd

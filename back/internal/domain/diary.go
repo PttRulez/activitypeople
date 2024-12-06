@@ -22,7 +22,7 @@ func (d DiaryDay) CalculateCalories(u User) DiaryDay {
 		caloriesBurned += a.Calories
 	}
 	fmt.Println("burned", caloriesBurned, d.Steps, d.Date.Format(time.DateOnly))
-	caloriesBurned += d.Steps / 100 * u.CaloriesPer100Steps
+	caloriesBurned += int(float64(d.Steps) / 100 * u.CaloriesPer100Steps)
 	fmt.Println("burned", caloriesBurned)
 
 	caloriesConsumed := 0

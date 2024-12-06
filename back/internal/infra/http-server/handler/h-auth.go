@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -44,7 +43,7 @@ func (c *AuthController) Login(e echo.Context) error {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)),
 		},
 	}
-	fmt.Println("CLIAM", claims)
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	accessToken, err := token.SignedString([]byte(c.jwtSecret))
 	if err != nil {

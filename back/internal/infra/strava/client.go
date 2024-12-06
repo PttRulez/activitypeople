@@ -34,6 +34,7 @@ func (api *Client) GetActivity(ctx context.Context, id int) (
 
 func (api *Client) GetAthleteActivities(ctx context.Context, after *int64) (
 	[]AthleteActivityResponse, error) {
+		
 	req, _ := http.NewRequest(http.MethodGet, api.baseURl+"athlete/activities", nil)
 	req = req.WithContext(ctx)
 	req.Header.Add("Authorization", "Bearer "+api.userAccessToken)

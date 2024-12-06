@@ -100,6 +100,7 @@ const MealForm = (p: Props) => {
         </div>
         <div>{watch("calories")} калорий</div>
       </section>
+      
       <section>
         <Controller
           control={control}
@@ -117,6 +118,7 @@ const MealForm = (p: Props) => {
           )}
         />
       </section>
+
       <div className='label grid grid-cols-[3fr_1fr_1fr_1fr] gap-2 text-xs text-center'>
         <span className='label-text'>Что ели?</span>
         <span className='label-text'>вес</span>

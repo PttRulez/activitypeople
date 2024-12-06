@@ -12,7 +12,8 @@ import (
 )
 
 func (s *Service) SaveSteps(ctx context.Context, steps domain.Steps,
-	userID int) error {
+	userID int,
+) error {
 	_, err := s.stepsRepo.GetByDate(ctx, steps.Date, userID)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		return err
@@ -26,7 +27,8 @@ func (s *Service) SaveSteps(ctx context.Context, steps domain.Steps,
 }
 
 func (s *Service) GetActivities(ctx context.Context, user domain.User,
-	filters domain.ActivityFilters) ([]domain.Activity, error) {
+	filters domain.ActivityFilters,
+) ([]domain.Activity, error) {
 	activities, err := s.activityRepo.Get(ctx, user.Id, filters)
 	if err != nil {
 		return nil, err
@@ -36,7 +38,8 @@ func (s *Service) GetActivities(ctx context.Context, user domain.User,
 }
 
 func (s *Service) HydrateStravaActivity(ctx context.Context, sourceId int,
-	u domain.User) error {
+	u domain.User,
+) error {
 	stravaInfo, err := s.stravaRepo.GetByUserId(ctx, u.Id)
 	if err != nil {
 		return err
@@ -166,7 +169,8 @@ func (s *Service) OAuthStrava(ctx context.Context, userCode string, userID int) 
 }
 
 func NewService(activityRepo ActivitiesRepository, stepsRepo StepsRepository,
-	stravaBase *strava.Base, stravaRepo StravaRepository) *Service {
+	stravaBase *strava.Base, stravaRepo StravaRepository,
+) *Service {
 	return &Service{
 		activityRepo: activityRepo,
 		stepsRepo:    stepsRepo,

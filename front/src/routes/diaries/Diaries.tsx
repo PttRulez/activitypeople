@@ -7,6 +7,7 @@ import useAxiosPrivate from "src/hooks/useAxiosPrivate";
 import { DiariesResponse, DiaryResponse } from "src/types/diary";
 import StepsForm from "./StepsForm";
 import WeightForm from "./WeightForm";
+import useAuth from "src/hooks/useAuth";
 
 type DiaryDay = {
   date: string;
@@ -15,6 +16,7 @@ type DiaryDay = {
 
 const Diaries = () => {
   const axios = useAxiosPrivate();
+  const { auth } = useAuth();
   const [until, setUntil] = useState(dayjs().endOf("week").add(1, "day"));
   const [from, setFrom] = useState(
     dayjs().endOf("week").add(1, "day").subtract(27, "day")
@@ -101,7 +103,7 @@ const Diaries = () => {
                         "border-green-500": d.calories <= 0,
                         "border-red-500": d.calories > 0,
                       })}
-                      data-tip={`\n ${d.caloriesConsumed} - ${diaryQuery.data?.bmr} - ${d.caloriesBurned} (${d.steps})`}
+                      data-tip={`\n ${d.caloriesConsumed} - ${auth.user.bmr} - ${d.caloriesBurned} (${d.steps})`}
                     >
                       {d?.calories}
                     </div>
