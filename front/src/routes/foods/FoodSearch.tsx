@@ -6,14 +6,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 type Props = {
-  key: string;
+  reactKey: string;
   onChoose: (food: FoodResponse) => void;
   inputProps: {
     [key: string]: any;
   };
 };
 const FoodSearch = (props: Props) => {
-  const { inputProps, onChoose, key } = props;
+  const { inputProps, onChoose, reactKey } = props;
   const [foodQuery, setFoodQuery] = useState<string>("");
   const debouncedValue = useDebounce<string>(foodQuery, 500);
 
@@ -44,7 +44,7 @@ const FoodSearch = (props: Props) => {
       items={foods ?? []}
       inputProps={{
         placeholder: "Введите название продукта",
-        key,
+        key: reactKey,
         ...inputProps,
       }}
       onChoose={onChoose}

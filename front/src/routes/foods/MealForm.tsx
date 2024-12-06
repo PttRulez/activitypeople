@@ -127,7 +127,7 @@ const MealForm = (p: Props) => {
         {foodFields.map((field, index) => (
           <div className='grid grid-cols-[3fr_1fr_1fr_1fr] gap-2 mb-2'>
             <FoodSearch
-              key={field.name + index}
+              reactKey={field.name + index}
               inputProps={{
                 ...register(`foods.${index}.name`),
                 value: watch(`foods.${index}.name`),

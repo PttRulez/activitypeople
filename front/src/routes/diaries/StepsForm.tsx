@@ -3,13 +3,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Controller, useForm } from "react-hook-form";
 import useAxiosPrivate from "src/hooks/useAxiosPrivate";
-import { CreateWeightData, CreateWeightSchema } from "src/validation/weight";
+import { CreateStepsData, CreateStepsSchema } from "src/validation/steps";
 
 type Props = {
   onSuccess: Function;
 };
 
-const WeightForm = (p: Props) => {
+const StepsForm = (p: Props) => {
   const {
     control,
     formState: { errors },
@@ -18,20 +18,20 @@ const WeightForm = (p: Props) => {
     reset,
     setValue,
     watch,
-  } = useForm<CreateWeightData>({
+  } = useForm<CreateStepsData>({
     defaultValues: {
       date: dayjs().toISOString(),
     },
-    resolver: zodResolver(CreateWeightSchema),
+    resolver: zodResolver(CreateStepsSchema),
   });
 
   const axios = useAxiosPrivate();
   const queryClient = useQueryClient();
-  const createWeight = useMutation({
-    mutationFn: async (data: CreateWeightData) => {
-      await axios.post("/weight", data);
+  const createSteps = useMutation({
+    mutationFn: async (data: CreateStepsData) => {
+      await axios.post("/steps", data);
     },
-    onSuccess: (_: any) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["diaries"] });
       reset();
       p.onSuccess();
@@ -41,8 +41,8 @@ const WeightForm = (p: Props) => {
     },
   });
 
-  const onSubmit = (data: CreateWeightData) => {
-    createWeight.mutate(data);
+  const onSubmit = (data: CreateStepsData) => {
+    createSteps.mutate(data);
   };
 
   return (
@@ -73,19 +73,19 @@ const WeightForm = (p: Props) => {
 
         <section>
           <div className='label'>
-            <span className='label-text'>Вес, кг</span>
+            <span className='label-text'>Шаги</span>
           </div>
           <input
             type='number'
             step='.1'
             className='input input-bordered w-full'
-            {...register("weight", {
+            {...register("steps", {
               valueAsNumber: true,
             })}
           />
           <div className='label'>
             <span className='label-text-alt text-error'>
-              {errors.weight?.message}
+              {errors.steps?.message}
             </span>
           </div>
         </section>
@@ -103,4 +103,4 @@ const WeightForm = (p: Props) => {
   );
 };
 
-export default WeightForm;
+export default StepsForm;

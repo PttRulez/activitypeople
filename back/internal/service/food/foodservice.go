@@ -24,7 +24,7 @@ func (s *FoodService) CreateWeight(ctx context.Context, w domain.Weight,
 	return s.weightRepo.Insert(ctx, w, userID)
 }
 
-func (s *FoodService) GetMeals(ctx context.Context, f domain.MealFilters, userId int) (
+func (s *FoodService) GetMeals(ctx context.Context, f domain.TimeFilters, userId int) (
 	[]domain.Meal, error) {
 	return s.mealRepo.Get(ctx, f, userId)
 }
@@ -33,7 +33,7 @@ func (s *FoodService) Search(ctx context.Context, q string) ([]domain.Food, erro
 	return s.foodRepo.Search(ctx, q)
 }
 
-func NewFoodService(foodRepo FoodRepository, mealRepo MealRepository, weightRepo WeightRepository) *FoodService {
+func NewService(foodRepo FoodRepository, mealRepo MealRepository, weightRepo WeightRepository) *FoodService {
 	return &FoodService{
 		foodRepo:   foodRepo,
 		mealRepo:   mealRepo,
@@ -55,7 +55,7 @@ type FoodRepository interface {
 
 type MealRepository interface {
 	Insert(ctx context.Context, f domain.Meal) error
-	Get(ctx context.Context, f domain.MealFilters, userID int) ([]domain.Meal, error)
+	Get(ctx context.Context, f domain.TimeFilters, userID int) ([]domain.Meal, error)
 }
 
 type WeightRepository interface {

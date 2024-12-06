@@ -29,8 +29,3 @@ type Meal struct {
 	Foods    []FoodInMeal
 	UserId   int
 }
-
-type MealFilters struct {
-	From  time.Time
-	Until time.Time
-}

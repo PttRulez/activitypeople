@@ -23,6 +23,7 @@ func FromDiaryToDiaryResponse(d domain.DiaryDay) contracts.DiaryDayResponse {
 		CaloriesBurned:   d.CaloriesBurned,
 		CaloriesConsumed: d.CaloriesConsumed,
 		Meals:            meals,
+		Steps:            d.Steps,
 		Weight:           d.Weight,
 	}
 }
@@ -38,5 +39,19 @@ func FromWeightToWeightResponse(w domain.Weight) contracts.WeightResponse {
 	return contracts.WeightResponse{
 		Date:   w.Date,
 		Weight: w.Weight,
+	}
+}
+
+func FromStepsReqToSteps(req contracts.CreateStepsRequest) domain.Steps {
+	return domain.Steps{
+		Date:  req.Date,
+		Steps: req.Steps,
+	}
+}
+
+func FromStepsToStepsResponse(w domain.Steps) contracts.StepsResponse {
+	return contracts.StepsResponse{
+		Date:  w.Date,
+		Steps: w.Steps,
 	}
 }

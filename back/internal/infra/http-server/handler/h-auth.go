@@ -12,7 +12,6 @@ import (
 )
 
 type JwtClaims struct {
-	BMR   int
 	Id    int
 	Name  string
 	Email string
@@ -37,7 +36,6 @@ func (c *AuthController) Login(e echo.Context) error {
 	}
 
 	claims := &JwtClaims{
-		BMR:   user.BMR,
 		Id:    user.Id,
 		Name:  user.Name,
 		Email: user.Email,
@@ -46,7 +44,7 @@ func (c *AuthController) Login(e echo.Context) error {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)),
 		},
 	}
-	fmt.Println("CLIAM",  claims)
+	fmt.Println("CLIAM", claims)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	accessToken, err := token.SignedString([]byte(c.jwtSecret))
 	if err != nil {

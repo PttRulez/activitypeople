@@ -19,6 +19,29 @@ func (c *ActivitiesController) OAuthStrava(e echo.Context) error {
 	return c.activitiesService.OAuthStrava(e.Request().Context(), code, user.Id)
 }
 
+func (c *ActivitiesController) SaveSteps(e echo.Context) error {
+	user := e.Get("u").(domain.User)
+
+	var req contracts.CreateStepsRequest
+	err := e.Bind(&req)
+	if err != nil {
+		return err
+	}
+	err = ValidateStruct(req)
+	if err != nil {
+		return err
+	}
+
+	steps := converter.FromStepsReqToSteps(req)
+
+	err = c.activitiesService.SaveSteps(e.Request().Context(), steps, user.Id)
+	if err != nil {
+		return err
+	}
+
+	return e.String(http.StatusCreated, "Steps added successfully")
+}
+
 func (c *ActivitiesController) HydrateStravaActivity(e echo.Context) error {
 	user := e.Get("u").(domain.User)
 
@@ -61,25 +84,19 @@ func (c *ActivitiesController) GetActivities(e echo.Context) error {
 		return err
 	}
 
-	r := make([]contracts.ActivityDayResponse, 0)
-	curDate := activitiesList[0].Date
-	curIndex := -1
+	r := make(map[string][]contracts.ActivityResponse, 0)
 
 	for _, a := range activitiesList {
-		if a.Date.Equal(curDate) && curIndex != -1 {
-			r[curIndex].Activities = append(r[curIndex].Activities,
-				converter.FromActivityToActivityResponse(a))
+		if _, ok := r[a.Date.Format(time.DateOnly)]; !ok {
+			r[a.Date.Format(time.DateOnly)] = []contracts.ActivityResponse{
+				converter.FromActivityToActivityResponse(a),
+			}
 		} else {
-			curDate = a.Date
-			r = append(r, contracts.ActivityDayResponse{
-				Date: curDate.Format(time.DateOnly),
-				Activities: []contracts.ActivityResponse{
-					converter.FromActivityToActivityResponse(a),
-				},
-			})
-			curIndex++
+			r[a.Date.Format(time.DateOnly)] = append(r[a.Date.Format(time.DateOnly)],
+				converter.FromActivityToActivityResponse(a))
 		}
 	}
+
 	return e.JSON(http.StatusOK, r)
 }
 

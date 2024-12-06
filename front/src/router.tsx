@@ -15,6 +15,7 @@ import PersistLogin from "./components/PersisLogin";
 import StravaCallback from "./routes/StravaCallback";
 import Foods from "./routes/foods/Foods";
 import Diaries from "./routes/diaries/Diaries";
+import Settings from "./routes/Settings";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -27,6 +28,7 @@ const router = createBrowserRouter(
           <Route element={<AuthRequired />}>
             <Route path='/' element={<Home />} />
             <Route path='/activities' element={<Activities />} />
+            <Route path='/settings' element={<Settings />} />
             <Route path='/diaries' element={<Diaries />} />
             <Route path='/foods' element={<Foods />} />
             <Route path='/strava-oauth-callback' element={<StravaCallback />} />

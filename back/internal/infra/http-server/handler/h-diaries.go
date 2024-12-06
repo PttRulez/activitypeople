@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"time"
 
@@ -31,15 +30,19 @@ func (c *DiaryController) GetDiaries(e echo.Context) error {
 		}
 	}
 
-	diaries, err := c.diaryService.GetDiaries(e.Request().Context(), user, from, until)
+	diaries, err := c.diaryService.GetDiaries(e.Request().Context(), user.Id, from, until)
 	if err != nil {
 		return err
 	}
 
-	res := make(map[string]contracts.DiaryDayResponse)
+	drs := make(map[string]contracts.DiaryDayResponse)
 	for _, d := range diaries {
-		res[d.Date.Format("2006-01-02")] = converter.FromDiaryToDiaryResponse(d)
+		drs[d.Date.Format("2006-01-02")] = converter.FromDiaryToDiaryResponse(d)
 	}
+
+	var res contracts.DiariesResponse
+	res.BMR = user.BMR
+	res.Diaries = drs
 
 	return e.JSON(http.StatusOK, res)
 }
@@ -50,9 +53,4 @@ func NewDiaryController(diaryService DiaryService) *DiaryController {
 
 type DiaryController struct {
 	diaryService DiaryService
-}
-
-type DiaryService interface {
-	GetDiaries(ctx context.Context, user domain.User, from, until time.Time) (
-		map[time.Time]domain.DiaryDay, error)
 }

@@ -37,7 +37,7 @@ func (c *MealController) GetMeals(e echo.Context) error {
 	until := e.QueryParam("until")
 	now := time.Now()
 
-	var f domain.MealFilters
+	var f domain.TimeFilters
 
 	if from == "" {
 		f.From = now.AddDate(0, 0, -10)

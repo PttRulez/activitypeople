@@ -8,5 +8,11 @@ export type DiaryResponse = {
   caloriesConsumed: number;
   date: string;
   meals: MealResponse[];
+  steps: number;
   weight: number;
+};
+
+export type DiariesResponse = {
+  bmr: number;
+  diaries: Record<string, DiaryResponse>;
 };

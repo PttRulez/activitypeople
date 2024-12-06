@@ -26,8 +26,9 @@ func (pg *WeightPostgres) Insert(ctx context.Context, w domain.Weight,
 }
 
 func (pg *WeightPostgres) Get(ctx context.Context, userID int,
-	f domain.WeightFilters) ([]domain.Weight, error) {
+	f domain.TimeFilters) ([]domain.Weight, error) {
 	const op = "MealPostgres.Get"
+	
 	q := pg.sq.Select("date", "weight").
 		From("weights").
 		Where(sq.Eq{"user_id": userID}).

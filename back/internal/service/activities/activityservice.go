@@ -11,6 +11,20 @@ import (
 	"github.com/pttrulez/activitypeople/internal/infra/strava"
 )
 
+func (s *Service) SaveSteps(ctx context.Context, steps domain.Steps,
+	userID int) error {
+	_, err := s.stepsRepo.GetByDate(ctx, steps.Date, userID)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return err
+	}
+
+	if errors.Is(err, store.ErrNotFound) {
+		return s.stepsRepo.Insert(ctx, steps, userID)
+	} else {
+		return s.stepsRepo.Update(ctx, steps, userID)
+	}
+}
+
 func (s *Service) GetActivities(ctx context.Context, user domain.User,
 	filters domain.ActivityFilters) ([]domain.Activity, error) {
 	activities, err := s.activityRepo.Get(ctx, user.Id, filters)
@@ -49,7 +63,7 @@ func (s *Service) SyncStravaActivities(ctx context.Context, user domain.User) er
 	client := s.stravaBase.NewClient(*stravaInfo.AccessToken, *stravaInfo.RefreshToken,
 		s.makeStoreTokensFunc(ctx, user.Id))
 
-	// Собираем все страва активности юзера и делаем сет, чтобы не доабвлять дубли
+	// Собираем все страва активности юзера и делаем сет, чтобы не добавлять дубли
 	existingActivities, err := s.activityRepo.Get(ctx, user.Id, domain.ActivityFilters{
 		Source: domain.Strava,
 	})
@@ -65,11 +79,24 @@ func (s *Service) SyncStravaActivities(ctx context.Context, user domain.User) er
 	var activitiesToInsert []domain.Activity
 
 	isPolling := true
-	after := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+
+	var after *int64
+
+	lastUnix, err := s.activityRepo.GetLatestStravaUnix(ctx, user.Id)
+
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return err
+	} else if errors.Is(err, store.ErrNotFound) {
+		d := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+		after = &d
+	} else {
+		after = &lastUnix
+	}
 
 	for isPolling {
+		fmt.Println("polling")
 		// Запрашиваем активности из апи стравы
-		stravaActivities, err := client.GetAthleteActivities(ctx, &after)
+		stravaActivities, err := client.GetAthleteActivities(ctx, after)
 		if err != nil {
 			return err
 		}
@@ -92,7 +119,7 @@ func (s *Service) SyncStravaActivities(ctx context.Context, user domain.User) er
 
 			// Выставляем after датой последнего обработанного активити
 			if i == len(activities)-1 {
-				after = a.StartTimeUnix
+				after = &a.StartTimeUnix
 			}
 		}
 
@@ -138,10 +165,11 @@ func (s *Service) OAuthStrava(ctx context.Context, userCode string, userID int) 
 	return nil
 }
 
-func NewService(activityRepo ActivitiesRepository, stravaBase *strava.Base,
-	stravaRepo StravaRepository) *Service {
+func NewService(activityRepo ActivitiesRepository, stepsRepo StepsRepository,
+	stravaBase *strava.Base, stravaRepo StravaRepository) *Service {
 	return &Service{
 		activityRepo: activityRepo,
+		stepsRepo:    stepsRepo,
 		stravaBase:   stravaBase,
 		stravaRepo:   stravaRepo,
 	}
@@ -151,11 +179,13 @@ type Service struct {
 	activityRepo ActivitiesRepository
 	stravaBase   *strava.Base
 	stravaRepo   StravaRepository
+	stepsRepo    StepsRepository
 }
 
 type ActivitiesRepository interface {
 	Get(ctx context.Context, userID int, filters domain.ActivityFilters) (
 		[]domain.Activity, error)
+	GetLatestStravaUnix(ctx context.Context, userID int) (int64, error)
 	InsertBulk(ctx context.Context, activities []domain.Activity) error
 	UpdateCalories(ctx context.Context, calories, sourceId, userID int) error
 }
@@ -165,4 +195,12 @@ type StravaRepository interface {
 	Insert(ctx context.Context, accessToken string, refreshToken string, userId int) error
 	UpdateUserStravaInfo(ctx context.Context, accessToken string,
 		refreshToken string, userId int) error
+}
+
+type StepsRepository interface {
+	Get(ctx context.Context, userID int, f domain.TimeFilters) (
+		[]domain.Steps, error)
+	GetByDate(ctx context.Context, date time.Time, userID int) (domain.Steps, error)
+	Insert(ctx context.Context, w domain.Steps, userID int) error
+	Update(ctx context.Context, w domain.Steps, userID int) error
 }

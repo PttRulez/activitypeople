@@ -9,22 +9,25 @@ import { Link, useSearchParams } from "react-router-dom";
 import ActivityDayCard from "./ActivityDayCard";
 
 type ActivitiesState = {
+  daysBeforeFirst: number;
+  firstDate: dayjs.Dayjs;
+  lastDate: dayjs.Dayjs;
   monthName: string;
-  monthNumber: number;
   nextButtonLink: string | null;
   prevButtonLink: string;
-  year: number;
+  totalDays: number;
 };
 
 export type ActivityDay = {
   activities: ActivityResponse[];
   date: Date;
-} | null;
+};
 
 const Activities = () => {
   const queryClient = useQueryClient();
   const [searchParams, _] = useSearchParams();
   const now = dayjs();
+
   let date = dayjs();
   let year = Number(searchParams.get("year"));
   let month = Number(searchParams.get("month"));
@@ -47,14 +50,21 @@ const Activities = () => {
       }`;
     }
 
+    const daysBeforeFirst = getDay(date.startOf("month")) - 1;
+    const daysAfterLast = 7 - getDay(date.endOf("month"));
+    const totalDays = daysBeforeFirst + daysAfterLast + date.daysInMonth();
+
     return {
+      daysBeforeFirst,
+      firstDate: date.startOf("month").subtract(daysBeforeFirst, "days"),
+      lastDate: date.endOf("month").add(daysAfterLast, "days"),
       monthName: monthNameMap[date.month()],
-      monthNumber: date.month() + 1,
       nextButtonLink: nextButtonLink,
       prevButtonLink: `/activities?year=${date
         .subtract(1, "month")
         .year()}&month=${date.subtract(1, "month").month() + 1}`,
       year,
+      totalDays,
     };
   }, [year, month]);
 
@@ -63,16 +73,15 @@ const Activities = () => {
   const { data: activitiesResponse } = useQuery({
     queryKey: ["activities", year, month],
     queryFn: async () => {
-      let params: any = {};
-      if (calendar.monthNumber) {
-        params.month = calendar.monthNumber;
-      }
-      if (calendar.monthNumber) {
-        params.year = calendar.year;
-      }
-      const data = await axios.get<ActivityResponse[]>("/activities", {
-        params,
-      });
+      const data = await axios.get<Record<string, ActivityResponse[]>>(
+        "/activities",
+        {
+          params: {
+            from: calendar.firstDate.format("YYYY-MM-DD"),
+            until: calendar.lastDate.format("YYYY-MM-DD"),
+          },
+        }
+      );
       return data;
     },
   });
@@ -90,13 +99,18 @@ const Activities = () => {
   const days: ActivityDay[] = useMemo(() => {
     if (!activitiesResponse) return [];
 
-    const date = dayjs(`${calendar.year}-${calendar.monthNumber}-01`);
-    const daysBeforeFirst = getDay(date) - 1;
-    const daysAfterLast = 7 - getDay(date.endOf("month"));
-    const totalDays = daysBeforeFirst + daysAfterLast + date.daysInMonth();
-    const days = new Array(totalDays).fill(null);
-    for (const a of activitiesResponse.data) {
-      days[dayjs(a.date).date() - 1 + daysBeforeFirst] = a;
+    const days = [];
+    let curDate = calendar.firstDate;
+    while (!curDate.isAfter(calendar.lastDate)) {
+      let day = {
+        activities: [] as ActivityResponse[],
+        date: curDate.toDate(),
+      };
+      day.activities =
+        activitiesResponse.data[curDate.format("YYYY-MM-DD")] ?? [];
+      days.push(day);
+
+      curDate = curDate.add(1, "day");
     }
 
     return days;
@@ -134,7 +148,14 @@ const Activities = () => {
         </div>
         <div className='grid grid-cols-7 gap-4'>
           {days.map((d, i) => (
-            <ActivityDayCard key={"activitycard" + i} day={d} />
+            <ActivityDayCard
+              key={d.date.toLocaleString("ru-RU", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              })}
+              day={d}
+            />
           ))}
         </div>
       </div>

@@ -8,7 +8,6 @@ const (
 )
 
 type User struct {
-	BMR            int
 	Email          string
 	Id             int
 	HashedPassword string
@@ -16,6 +15,12 @@ type User struct {
 	Password       string
 	Role           Role
 	Strava         StravaInfo
+	UserSettings
+}
+
+type UserSettings struct {
+	BMR                 int
+	CaloriesPer100Steps int
 }
 
 type StravaInfo struct {
@@ -30,18 +35,20 @@ func (u *User) JSON() UserInfo {
 	}
 
 	return UserInfo{
-		BMR:          u.BMR,
-		Email:        u.Email,
-		Name:         u.Name,
-		Role:         u.Role,
-		StravaLinked: stravaLinked,
+		CaloriesPer100Steps: u.CaloriesPer100Steps,
+		BMR:                 u.BMR,
+		Email:               u.Email,
+		Name:                u.Name,
+		Role:                u.Role,
+		StravaLinked:        stravaLinked,
 	}
 }
 
 type UserInfo struct {
-	BMR          int    `json:"bmr"`
-	Email        string `json:"email"`
-	Name         string `json:"name"`
-	Role         Role   `json:"role"`
-	StravaLinked bool   `json:"stravaLinked"`
+	CaloriesPer100Steps int    `json:"caloriesPer100Steps"`
+	BMR                 int    `json:"bmr"`
+	Email               string `json:"email"`
+	Name                string `json:"name"`
+	Role                Role   `json:"role"`
+	StravaLinked        bool   `json:"stravaLinked"`
 }

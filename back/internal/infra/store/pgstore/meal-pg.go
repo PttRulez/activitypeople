@@ -57,7 +57,7 @@ func (pg *MealPostgres) Insert(ctx context.Context, m domain.Meal) error {
 	return nil
 }
 
-func (pg *MealPostgres) Get(ctx context.Context, f domain.MealFilters, userID int) (
+func (pg *MealPostgres) Get(ctx context.Context, f domain.TimeFilters, userID int) (
 	[]domain.Meal, error) {
 	const op = "MealPostgres.Get"
 

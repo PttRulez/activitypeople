@@ -18,6 +18,7 @@ import (
 	"github.com/pttrulez/activitypeople/internal/service/auth"
 	"github.com/pttrulez/activitypeople/internal/service/diaries"
 	"github.com/pttrulez/activitypeople/internal/service/food"
+	"github.com/pttrulez/activitypeople/internal/service/user"
 )
 
 func StartServer() {
@@ -31,6 +32,7 @@ func StartServer() {
 	foodStore := pgstore.NewFoodPostgres(pgConn)
 	mealStore := pgstore.NewMealPostgres(pgConn)
 	stravaStore := pgstore.NewStravaPostgres(pgConn)
+	stepsStore := pgstore.NewStepsPostgres(pgConn)
 	userStore := pgstore.NewUserPostgres(pgConn)
 	weightStore := pgstore.NewWeightPostgres(pgConn)
 
@@ -39,9 +41,12 @@ func StartServer() {
 
 	// services
 	authService := auth.NewService(userStore)
-	activitiesService := activities.NewService(activitiesStore, strava, stravaStore)
-	diaryService := diaries.NewService(activitiesStore, mealStore, weightStore)
-	foodService := food.NewFoodService(foodStore, mealStore, weightStore)
+	activitiesService := activities.NewService(activitiesStore, stepsStore, strava,
+		stravaStore)
+	diaryService := diaries.NewService(activitiesStore, mealStore, stepsStore, userStore,
+		weightStore)
+	foodService := food.NewService(foodStore, mealStore, weightStore)
+	userService := user.NewService(userStore)
 
 	// Routing
 	echo.NotFoundHandler = func(c echo.Context) error {
@@ -67,6 +72,7 @@ func StartServer() {
 	diaryController := handler.NewDiaryController(diaryService)
 	foodController := handler.NewFoodController(activitiesService, foodService)
 	mealController := handler.NewMealController(foodService)
+	userController := handler.NewUserController(userService)
 
 	// handlers
 	e.POST("/register", authController.Register)
@@ -87,7 +93,6 @@ func StartServer() {
 				fmt.Println("failed to cast Token to JwtClaims")
 			}
 			user := domain.User{
-				BMR:   claims.BMR,
 				Email: claims.Email,
 				Id:    claims.Id,
 				Name:  claims.Name,
@@ -103,6 +108,7 @@ func StartServer() {
 
 	// // Activities
 	authorized.GET("/activities", activitiesController.GetActivities)
+	authorized.POST("/steps", activitiesController.SaveSteps)
 
 	// // Diary
 	authorized.GET("/diary", diaryController.GetDiaries)
@@ -121,6 +127,9 @@ func StartServer() {
 	authorized.GET("/strava-oauth", activitiesController.OAuthStrava)
 	authorized.GET("/sync-strava", activitiesController.SyncStrava)
 	authorized.GET("/hydrate/:sourceId", activitiesController.HydrateStravaActivity)
+
+	// User
+	authorized.POST("/user/settings", userController.SaveUserSettings)
 
 	fmt.Printf("Listening on port %s\n", cfg.HttpListenPort)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.HttpListenPort)))

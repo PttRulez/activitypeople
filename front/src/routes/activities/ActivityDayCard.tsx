@@ -24,10 +24,16 @@ const ActivityDayCard = ({ day: d }: Props) => {
     },
   });
 
-  if (!d) {
+  if (d.activities.length === 0) {
     return (
       <Wrapper>
-        <div></div>
+        <div className='card-body'>
+          <div>
+            <div className='flex'>
+              <p>{dayjs(d.date).format("DD.MM")}</p>
+            </div>
+          </div>
+        </div>
       </Wrapper>
     );
   }

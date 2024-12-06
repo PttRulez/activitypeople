@@ -8,9 +8,9 @@ import (
 	"github.com/pttrulez/activitypeople/internal/domain"
 )
 
-func (s *DiaryService) GetDiaries(ctx context.Context, u domain.User, from,
+func (s *DiaryService) GetDiaries(ctx context.Context, userID int, from,
 	until time.Time) (map[time.Time]domain.DiaryDay, error) {
-	activities, err := s.activityRepo.Get(ctx, u.Id, domain.ActivityFilters{
+	activities, err := s.activityRepo.Get(ctx, userID, domain.ActivityFilters{
 		From:  from,
 		Until: until,
 	})
@@ -18,21 +18,35 @@ func (s *DiaryService) GetDiaries(ctx context.Context, u domain.User, from,
 		return nil, err
 	}
 
-	meals, err := s.mealRepo.Get(ctx, domain.MealFilters{
-		From:  from,
-		Until: until,
-	}, u.Id)
+	user, err := s.userRepo.GetById(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	weights, err := s.weightRepo.Get(ctx, u.Id, domain.WeightFilters{
+	meals, err := s.mealRepo.Get(ctx, domain.TimeFilters{
+		From:  from,
+		Until: until,
+	}, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	weights, err := s.weightRepo.Get(ctx, userID, domain.TimeFilters{
 		From:  from,
 		Until: until,
 	})
 	if err != nil {
 		return nil, err
 	}
+
+	steps, err := s.stepsRepo.Get(ctx, userID, domain.TimeFilters{
+		From:  from,
+		Until: until,
+	})
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("STEPS: %+v\n", steps)
 
 	diariesMap := make(map[time.Time]domain.DiaryDay, 0)
 
@@ -65,20 +79,35 @@ func (s *DiaryService) GetDiaries(ctx context.Context, u domain.User, from,
 			diariesMap[w.Date] = domain.DiaryDay{Date: w.Date, Weight: w.Weight}
 		}
 	}
+	for _, s := range steps {
+		fmt.Println(steps)
+		if d, ok := diariesMap[s.Date]; ok {
+			d.Steps = s.Steps
+			diariesMap[s.Date] = d
+		} else {
+			diariesMap[s.Date] = domain.DiaryDay{Date: s.Date, Steps: s.Steps}
+		}
+	}
 
-	fmt.Printf("u.BMR %+v\n", u)
 	for date, day := range diariesMap {
-		diariesMap[date] = day.CalculateCalories(u.BMR)
+		diariesMap[date] = day.CalculateCalories(user)
 	}
 
 	return diariesMap, nil
 }
 
-func NewService(activityRepo ActivityRepository, mealRepo MealRepository,
-	weightRepo WeightRepository) *DiaryService {
+func NewService(
+	activityRepo ActivityRepository,
+	mealRepo MealRepository,
+	stepsRepo StepsRepository,
+	userRepo UserRepository,
+	weightRepo WeightRepository,
+) *DiaryService {
 	return &DiaryService{
 		activityRepo: activityRepo,
 		mealRepo:     mealRepo,
+		stepsRepo:    stepsRepo,
+		userRepo:     userRepo,
 		weightRepo:   weightRepo,
 	}
 }
@@ -86,6 +115,8 @@ func NewService(activityRepo ActivityRepository, mealRepo MealRepository,
 type DiaryService struct {
 	activityRepo ActivityRepository
 	mealRepo     MealRepository
+	stepsRepo    StepsRepository
+	userRepo     UserRepository
 	weightRepo   WeightRepository
 }
 
@@ -95,11 +126,19 @@ type ActivityRepository interface {
 }
 
 type MealRepository interface {
-	Get(ctx context.Context, f domain.MealFilters, userID int) (
+	Get(ctx context.Context, f domain.TimeFilters, userID int) (
 		[]domain.Meal, error)
 }
 
+type StepsRepository interface {
+	Get(ctx context.Context, userID int,
+		f domain.TimeFilters) ([]domain.Steps, error)
+}
+type UserRepository interface {
+	GetById(ctx context.Context, userID int) (domain.User,
+		error)
+}
 type WeightRepository interface {
 	Get(ctx context.Context, userID int,
-		f domain.WeightFilters) ([]domain.Weight, error)
+		f domain.TimeFilters) ([]domain.Weight, error)
 }

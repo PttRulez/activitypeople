@@ -5,6 +5,8 @@ import { Role } from "src/types/enums";
 export type UserInfo = {
   accessToken?: string;
   user: {
+    bmr: number;
+    caloriesPer100Steps: number;
     email: string;
     name: string;
     role: Role;
@@ -21,6 +23,8 @@ const AuthContext = createContext<AuthInfo>({} as AuthInfo);
 export const emptyUser: UserInfo = {
   accessToken: undefined,
   user: {
+    bmr: 0,
+    caloriesPer100Steps: 0,
     stravaLinked: false,
   },
 } as UserInfo;
